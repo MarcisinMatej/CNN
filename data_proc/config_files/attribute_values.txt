@@ -1,0 +1,5 @@
+1: "attractive", "unattractive"
+2: "glasses", "no glasses"
+3: "male", "female"
+4: "smiling", "not smiling"
+5: "black hair", "blond hair", "brown hair", "gray hair", "other"
