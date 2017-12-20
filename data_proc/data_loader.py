@@ -1,4 +1,4 @@
-from data_proc.image_parser import *
+
 import numpy as np
 from scipy import ndimage
 from PIL import Image
@@ -8,6 +8,7 @@ from keras.preprocessing import image
 
 
 PATH = 'data_proc/config_files/'
+
 
 def load_folder_txts():
     with open(PATH+'folder.txt') as file_folder:
@@ -22,43 +23,6 @@ def load_label_txts():
         attrs = file_attrs.readlines()
     return attr_vals, attrs
 
-def load_crop_txts():
-    with open(PATH+'bboxes.txt') as file_bboxes:
-        bboxes = file_bboxes.readlines()
-    with open(PATH+'folder.txt') as file_folder:
-        folder = file_folder.readlines()
-    return bboxes, folder
-
-def crop_store_images(bboxes, folders):
-    images = []
-    for bbox,folder in zip(bboxes,folders):
-        arr = bbox.split()
-        img = {
-            'path': arr[0],
-            'bbox': (float(arr[1]), float(arr[2]), float(arr[5]), float(arr[6])),
-            'name': arr[0].split('/')[-1]
-        }
-        code = int(folder.split()[-1])
-        #parse output folder
-        if code==1:
-            img.update({'folder':'data/train/'})
-        elif code==2:
-            img.update({'folder':'data/test/'})
-        if code==3:
-            img.update({'folder':'data/validation/'})
-        images.append(img)
-    for img in images:
-        # TODO change here we crop and resize
-        image_parser.crop_resize(img['path'], img['bbox'], img['folder'] + img['name'])
-
-def run_data_crop():
-    '''
-    method processes images in such a manner, that it will cut out face and store it in separate folders (training,testing,validaiton)
-    :return:
-    '''
-    bboxes, folder = load_crop_txts()
-    crop_store_images(bboxes, folder)
-    # CelebA/img_align_celeba/000001.jpg 45 76 148 76 148 179 45 179
 
 def matrix_image(image):
     Standard_size = (32,32)
@@ -71,18 +35,18 @@ def matrix_image(image):
     image = np.array(image)
     return image
 
+
 def flatten_image(image_path):
     '''
     Flattens image to 3D flat vector
     :param image_path: path to image location
-    :return:
+    :return: single image flatten in format channel first ( eg. picture 32x32 in rgb will be 3x1024)
     '''
     ndimage.imread(image_path).transpose((2, 0, 1))
 
 
 class DataGenerator(object):
-    'Generates data for Keras'
-
+    """Generates data for Keras"""
     def __init__(self, img_shape=(32,32), chunk_size=32):
         'Initialization'
         self.img_shape = img_shape
@@ -97,8 +61,11 @@ class DataGenerator(object):
             self.attr_class_cnt.append(cnt)
         self.FindOffsets()
 
-
     def FindOffsets(self):
+        '''
+        Finds offset of training,testing and validation data from config file folders.txt
+        :return:
+        '''
         i = 0
         folder = load_folder_txts()
         self.train_offset=0
@@ -110,7 +77,6 @@ class DataGenerator(object):
                 self.test_offset = i
             i+=1
         self.validation_offset = i
-
 
     def Labels_generator(self,curr_offset):
         '''
@@ -159,6 +125,7 @@ class DataGenerator(object):
             images.append(x)
 
         return np.vstack(images)
+
 
 if __name__ == "__main__":
     # run_data_crop()
