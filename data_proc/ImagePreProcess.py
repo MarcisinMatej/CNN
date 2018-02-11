@@ -1,6 +1,6 @@
 from data_proc import ImageParser
 
-PATH = 'data_proc/config_files/'
+PATH = 'config_files/'
 
 
 def load_crop_txts():

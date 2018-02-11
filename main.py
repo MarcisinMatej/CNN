@@ -22,18 +22,19 @@ def RunModel(train_data,train_labels_one_hot,test_data,test_labels_one_hot):
     print('Test accuracy:', scores[1])
 
 def RunModelWithGenerators():
-    bulk_size = 32
+    bulk_size = 1024
     train_data_dir = 'data/train'
     validation_data_dir = 'data/validation'
     nb_train_samples = 2000
     nb_validation_samples = 800
     n_epochs = 250
     batch_size = 32
-    model = create_model()
+    in_shape = (64,64,3)
+    model = create_model(in_shape=in_shape)
     # model.compile(optimizer='rmsprop', loss=['categorical_crossentropy', 'categorical_crossentropy'],
     #               loss_weights=[1, 1], metrics=['accuracy'])
 #"categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"
-    opt = optimizers.Adam(lr=0.0000015)
+    opt = optimizers.Adam(lr=0.00000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
 
@@ -41,7 +42,7 @@ def RunModelWithGenerators():
     histories_test = []
     for e in range(n_epochs):
         print("epoch %d" % e)
-        tmp = DataGenerator((32, 32), bulk_size)
+        tmp = DataGenerator((64, 64), bulk_size)
         train_gen = tmp.generate_training()
         test_gen = tmp.generate_testing()
         # training
