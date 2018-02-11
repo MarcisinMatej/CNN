@@ -34,26 +34,25 @@ def RunModelWithGenerators():
     # model.compile(optimizer='rmsprop', loss=['categorical_crossentropy', 'categorical_crossentropy'],
     #               loss_weights=[1, 1], metrics=['accuracy'])
 #"categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"
-    opt = optimizers.Adam(lr=0.00000015)
+    opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
 
     histories_train = []
     histories_test = []
+
     for e in range(n_epochs):
         print("epoch %d" % e)
         tmp = DataGenerator((64, 64), bulk_size)
         train_gen = tmp.generate_training()
-        test_gen = tmp.generate_testing()
         # training
         for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
             #TODO here we can select just 1 attribute for training
             histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
             #TODO debug
-
         plot_history(merge_history(histories_train), 'epoch' + str(e))
-
         # Testing
+        test_gen = tmp.generate_testing()
         for X_train, Y_train in test_gen:  # these are chunks of ~bulk pictures
             histories_test.append(model.predict(X_train, Y_train, batch_size=batch_size, epochs=1))
 

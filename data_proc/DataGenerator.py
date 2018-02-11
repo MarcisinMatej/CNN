@@ -70,12 +70,17 @@ class DataGenerator(object):
     def generate_data(self, start_offset, end_offset):
         i = start_offset
         # TODO solve overlap, now it is irrelevant
-        while i < end_offset:
-            # b_i is index in batch
-            img_labels = self.labels_generator(i)
-            images = self.get_transformed_images(i)
-            i += self.chunk_size
-            yield images, img_labels
+        while (i + self.chunk_size) < end_offset:
+            # try catch for possible problems with image formats
+            try:
+                # b_i is index in batch
+                img_labels = self.labels_generator(i)
+                images = self.get_transformed_images(i)
+                i += self.chunk_size
+                yield images, img_labels
+            except Exception as e:
+                print(str(e))
+                i += self.chunk_size
 
     def generate_training(self):
         return self.generate_data(self.train_offset, self.test_offset)
