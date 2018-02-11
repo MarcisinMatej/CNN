@@ -1,48 +1,8 @@
-
 import numpy as np
-from scipy import ndimage
-from PIL import Image
-from keras.utils import np_utils
-from keras.preprocessing.image import ImageDataGenerator
 from keras.preprocessing import image
+from keras.utils import np_utils
 
-
-PATH = 'data_proc/config_files/'
-
-
-def load_folder_txts():
-    with open(PATH+'folder.txt') as file_folder:
-        folder = file_folder.readlines()
-    return folder
-
-
-def load_label_txts():
-    with open(PATH+'attribute_values.txt') as file_attr_vals:
-        attr_vals = file_attr_vals.readlines()
-    with open(PATH+'attributes.txt') as file_attrs:
-        attrs = file_attrs.readlines()
-    return attr_vals, attrs
-
-
-def matrix_image(image):
-    Standard_size = (32,32)
-    "opens image and converts it to a m*n matrix"
-    image = Image.open(image)
-    print("changing size from %s to %s" % (str(image.size), str(Standard_size)))
-    image = image.resize(Standard_size)
-    image = list(image.getdata())
-    image = map(list,image)
-    image = np.array(image)
-    return image
-
-
-def flatten_image(image_path):
-    '''
-    Flattens image to 3D flat vector
-    :param image_path: path to image location
-    :return: single image flatten in format channel first ( eg. picture 32x32 in rgb will be 3x1024)
-    '''
-    ndimage.imread(image_path).transpose((2, 0, 1))
+from data_proc.DataLoader import load_label_txts, load_folder_txts
 
 
 class DataGenerator(object):
@@ -59,62 +19,71 @@ class DataGenerator(object):
         for attr_val in self.attr_vals:
             cnt = len(attr_val.split(":")[1].split(","))
             self.attr_class_cnt.append(cnt)
-        self.FindOffsets()
+        # split data to training,testing,validation
+        self.train_offset = 0
+        self.test_offset = 0
+        self.validation_offset = 0
+        self.find_offsets()
 
-    def FindOffsets(self):
-        '''
+    def find_offsets(self):
+        #TODO nacist si tri pole indexov trenovaci/testovaci/validacni
+        """
         Finds offset of training,testing and validation data from config file folders.txt
         :return:
-        '''
+        """
         i = 0
         folder = load_folder_txts()
-        self.train_offset=0
-        self.test_offset=0
-        self.validation_offset = 0
 
+        # marker splits data to 3 parts, training-1/testing-2/validation-3
         while folder[i].split()[-1] != "3":
             if self.test_offset == 0 and folder[i].split()[-1] == "2":
                 self.test_offset = i
             i+=1
         self.validation_offset = i
 
-    def Labels_generator(self,curr_offset):
-        '''
+    def labels_generator(self, curr_offset):
+        """
         Generate labels from attribute file
         :param curr_offset: starting position in attribute list
         :return: labels for specific batch of data
-        '''
+        """
         img_labels =[[None for i in range(self.chunk_size)] for j in range(self.attr_cnt)]
         #create dictionary of image name and attributes labels
-        for i in range(curr_offset, curr_offset + self.chunk_size):
-            attr_line = self.attrs[i]
+        for entry_ind in range(curr_offset, curr_offset + self.chunk_size):
+            attr_line = self.attrs[entry_ind]
             line_arr = attr_line.split()
             img_name = line_arr[0].split("/")[-1]
-            #create one hot vectors for each attribute entry
-            for j in range(self.attr_cnt):
-                attr_value = int(line_arr[j+1]) - 1
+            #create vectors of ints for each entry of attribute values
+            for att_ind in range(self.attr_cnt):
+                attr_value = int(line_arr[att_ind+1]) - 1
                 # immage i attribute j
-                img_labels[j][i%self.chunk_size] = attr_value
+                img_labels[att_ind][entry_ind%self.chunk_size] = attr_value
 
         # convert to one hot vector
         to_return = []
-        for i in range(self.attr_cnt):
-            to_return.append(np_utils.to_categorical(img_labels[i], self.attr_class_cnt[i]))
+        for attr_ind in range(self.attr_cnt):
+            to_return.append(np_utils.to_categorical(img_labels[attr_ind], self.attr_class_cnt[attr_ind]))
 
         return to_return
         # print(attr_class_cnt)
 
-    def TrainingGenerator(self):
-        i = self.train_offset
-        # TODO solve overlap, know it is irrelevant
-        while i < self.test_offset:
+    def generate_data(self, start_offset, end_offset):
+        i = start_offset
+        # TODO solve overlap, now it is irrelevant
+        while i < end_offset:
             # b_i is index in batch
-            img_labels = self.Labels_generator(i)
-            images = self.get_transformed_images_training(i)
-            i+=self.chunk_size
-            yield images,img_labels
+            img_labels = self.labels_generator(i)
+            images = self.get_transformed_images(i)
+            i += self.chunk_size
+            yield images, img_labels
 
-    def get_transformed_images_training(self, curr_offset):
+    def generate_training(self):
+        return self.generate_data(self.train_offset, self.test_offset)
+
+    def generate_testing(self):
+        return self.generate_data(self.test_offset, self.validation_offset)
+
+    def get_transformed_images(self, curr_offset):
         images = []
         for i in range(curr_offset, curr_offset + self.chunk_size):
             path = 'data_proc/data/train/' + self.attrs[i].split()[0].split("/")[-1]
@@ -127,11 +96,12 @@ class DataGenerator(object):
         return np.vstack(images)
 
 
+# for debug purposes
 if __name__ == "__main__":
     # run_data_crop()
     tmp = DataGenerator()
-    gen = tmp.TrainingGenerator()
-    cnt=0
+    gen = tmp.generate_training()
+    cnt = 0
     for i in gen:
         if cnt < 1 :
             print(i[0].shape)

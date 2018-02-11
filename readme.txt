@@ -1,3 +1,14 @@
+TODO natrenovat 64x64 spravit graf konvergence pro kazdy attribut(x epocha,y chyba)
+	spocitat trenovaci,testovaci,validacni
+	na testovacich datach spravit - confusion mattrix (chyby true possitive/false positive)
+
+zmenit label training/testing/validation na samostatny list (nemusia byt po kope)
+
+zmerat rychlost ako je halkiva na velikost batchu : je to jedno, keras si bere 32
+zmerat ako rychlo sa generuju virtualne obrazky
+
+prihodit tutorial na spustenie + kniznice a ich verzie
+
 TODO 1 doriesit adresare a cesty k datam
 TODO 1.1 load/save model
 TODO 2 merge of history + history plotting

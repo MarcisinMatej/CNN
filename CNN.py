@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import os
-import keras
 import matplotlib.pyplot as plt
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense, Activation
@@ -10,14 +8,15 @@ from keras.layers import Input, Flatten
 from keras.models import Model
 from keras.utils import plot_model
 
+COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 
-def createModel(in_shape=(32, 32, 3)):
+def create_model(in_shape=(32, 32, 3)):
     #TODO add parameter for number of outputs and type categories for softmax
-    '''
+    """
     Creates model for CNN with Keras functional api.
     :param in_shape: tuple (x,y,z) of input shape for model
     :return: keras model
-    '''
+    """
 
     #define shape of input
     input = Input(shape=in_shape,name="input")
@@ -55,53 +54,110 @@ def createModel(in_shape=(32, 32, 3)):
     model = Model(inputs=input, outputs=output_layers)
     # summarize layers
     print(model.summary())
+    #TODO plot model
+#    plot_model(model)
     return model
 
 
-def PlotModel(model):
-    #TODO fix graphviz
-    '''
+def plot_model(model):
+    """
     Produces plot of model
     :param model:
     :return: saves plot image
-    '''
+    """
     plot_model(model, to_file='model.png')
 
 
-def PlotHistory(history):
-    '''
+def plot_history(history,name):
+    """
     Produces plot of loss and accuracy per epoch for validation and training data.
     Values are taken from history.
-    :param history: history returned from fit.model(...), basically dictionary
+    :param history: history returned from merge_histories(), basically dictionary
     :return:
-    '''
+    """
     # Loss Curves
-    plt.figure(figsize=[8, 6])
-    plt.plot(history.history['loss'], 'r', linewidth=3.0)
-    plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
-    plt.legend(['Training loss', 'Validation Loss'], fontsize=18)
-    plt.xlabel('Epochs ', fontsize=16)
+    c = 0
+    plt.figure()
+    ax = plt.subplot(111)
+    for key in history.keys():
+        if 'loss' in key:
+            ax.plot(history[key], COLORS[c], linewidth=3.0,label=key)
+            c = (c+1) % len(COLORS)
+        # plt.plot(history.history['loss'], 'r', linewidth=3.0)
+        #plt.plot(history['loss'], 'r', linewidth=3.0)
+        #plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
+        #plt.plot(history['val_loss'], 'b', linewidth=3.0)
+
+    # Shrink current axis's height by 10% on the bottom
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
+    ax.legend(loc='upper center',ncol=4, bbox_to_anchor=(0.5, -0.05))
+    plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Loss', fontsize=16)
     plt.title('Loss Curves', fontsize=16)
+    plt.savefig('figures/loss' + name)
 
     # Accuracy Curves
+    c = 0
     plt.figure(figsize=[8, 6])
-    plt.plot(history.history['acc'], 'r', linewidth=3.0)
-    plt.plot(history.history['val_acc'], 'b', linewidth=3.0)
-    plt.legend(['Training Accuracy', 'Validation Accuracy'], fontsize=18)
-    plt.xlabel('Epochs ', fontsize=16)
+    ax = plt.subplot(111)
+    for key in history.keys():
+        if 'acc' in key:
+            ax.plot(history[key], COLORS[c], linewidth=3.0,label=key)
+            c = (c + 1) % len(COLORS)
+            # #plt.plot(history.history['acc'], 'r', linewidth=3.0)
+            # plt.plot(history['acc'], 'r', linewidth=3.0)
+            # #plt.plot(history.history['val_acc'], 'b', linewidth=3.0)
+            # plt.plot(history['val_acc'], 'b', linewidth=3.0)
+            # Shrink current axis's height by 10% on the bottom
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
+    ax.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, -0.05))
+    plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     plt.title('Accuracy Curves', fontsize=16)
+    plt.savefig('figures/acc' + name)
 
-def MergeHistory(histories):
-    '''
+    plt.close('all')
+
+
+def merge_history(histories):
+    """
     Helper method which merges multiple history files.
     :param histories: array of histories ordered in order of merging (needed for epoch index update)
     :return: single history dictionary
-    '''
-    pass
-    #TODO
+    """
+    history = {}
+    if len(histories) <= 0:
+        return {}
+    for key in histories[0].history.keys():
+        history[key] = []
 
+    for h in histories:
+        for key in h.history.keys():
+            history[key] += h.history[key]
+
+    return history
+
+def compute_epoch_history(previous, current):
+    """
+    Helper method which merges multiple history files from bulk run into single epoch average history.
+    :param histories: array of histories ordered in order of merging (needed for epoch index update)
+    :return: single history dictionary
+    """
+    if len(current) <= 0:
+        return {}
+    if len(previous.keys()) <= 0 :
+        for key in current[0].history.keys():
+            previous[key] = []
+    #TODO finish
+    # for h in current:
+    #     for key in h.history.keys():
+    #         history[key] += h.history[key]
+    #
+    # return history
 
 
 
