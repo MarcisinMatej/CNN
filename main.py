@@ -59,13 +59,8 @@ def RunModelWithGenerators():
 def RunLoadedModelWithGenerators():
     bulk_size = 1024
     model_path = 'model/'
-    train_data_dir = 'data/train'
-    validation_data_dir = 'data/validation'
-    nb_train_samples = 2000
-    nb_validation_samples = 800
     n_epochs = 250
     batch_size = 32
-    in_shape = (64,64,3)
 
     model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
@@ -99,18 +94,14 @@ def RunLoadedModelWithGenerators():
 def RunModelWithVirtualGenerators():
     bulk_size = 1024
     model_path = 'model/'
-    train_data_dir = 'data/train'
-    validation_data_dir = 'data/validation'
-    nb_train_samples = 2000
-    nb_validation_samples = 800
     n_epochs = 250
     batch_size = 32
-    in_shape = (64,64,3)
 
-    model = load_model(model_path)
+    in_shape = (64, 64, 3)
+    model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
-    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
 
     histories_train = []
     histories_test = []
