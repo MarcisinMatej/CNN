@@ -3,6 +3,7 @@ import keras
 from CNN import *
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
+import tensorflow as tf
 
 
 def RunModel(train_data,train_labels_one_hot,test_data,test_labels_one_hot):
@@ -65,7 +66,7 @@ def RunModelWithGenerators():
 
 
 def RunLoadedModelWithGenerators():
-    bulk_size = 32
+    bulk_size = 1024
     model_path = 'model/'
     train_data_dir = 'data/train'
     validation_data_dir = 'data/validation'
@@ -86,24 +87,31 @@ def RunLoadedModelWithGenerators():
     for e in range(n_epochs):
         print("epoch %d" % e)
         tmp = DataGenerator((64, 64), bulk_size)
-        # train_gen = tmp.generate_training()
-        # # training
-        # for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
-        #     #TODO here we can select just 1 attribute for training
-        #     histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
-        #
-        # save_model(model,model_path)
-        # plot_history(merge_history(histories_train), 'epoch_train' + str(e))
+        train_gen = tmp.generate_training()
+        # training
+        for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
+            #TODO here we can select just 1 attribute for training
+            histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
+
+        save_model(model,model_path)
+        plot_history(merge_history(histories_train), 'epoch_train' + str(e))
         # Testing
         test_gen = tmp.generate_testing()
         c = 0
-        for X_train, Y_train in test_gen:  # these are chunks of ~bulk pictures
+        for X_test, Y_test in test_gen:  # these are chunks of ~bulk pictures
             print("chunk" + str(c))
             c+=1
-            histories_test.append(model.evaluate(x=X_train,y=Y_train,batch_size=batch_size))
+            histories_test.append(model.evaluate(x=X_test,y=Y_test,batch_size=batch_size))
         plot_history(prepare_eval_history(histories_test), 'epoch_test' + str(e))
 
 
 if __name__ == "__main__":
+    # issue with memory, in default tensorflow allocates nearly all possible memory
+    # this can result in OOM error later
+    config = tf.ConfigProto()
+    config.gpu_options.allow_growth = True
+    sess = tf.Session(config=config)
+
     # RunModelWithGenerators()
+
     RunLoadedModelWithGenerators()
