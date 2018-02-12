@@ -170,6 +170,6 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # RunModelWithGenerators()
+    RunModelWithGenerators()
 
-    RunLoadedModelWithGenerators()
+    # RunLoadedModelWithGenerators()
