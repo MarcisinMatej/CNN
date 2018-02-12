@@ -10,7 +10,6 @@ zmerat ako rychlo sa generuju virtualne obrazky
 prihodit tutorial na spustenie + kniznice a ich verzie
 
 TODO 1 doriesit adresare a cesty k datam
-TODO 1.1 load/save model
 TODO 3 validation data generator
 TODO 4 generator expand 
 TODO 5 pozriet sa ci sa dajako neda spojit moj generator a Keras (data augmentation)

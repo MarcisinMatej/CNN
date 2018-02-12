@@ -67,7 +67,7 @@ class DataGenerator(object):
         return to_return
         # print(attr_class_cnt)
 
-    def generate_data(self, start_offset, end_offset):
+    def generate_data(self, start_offset, end_offset,folder):
         i = start_offset
         # TODO solve overlap, now it is irrelevant
         while (i + self.chunk_size) < end_offset:
@@ -75,7 +75,7 @@ class DataGenerator(object):
             try:
                 # b_i is index in batch
                 img_labels = self.labels_generator(i)
-                images = self.get_transformed_images(i)
+                images = self.get_transformed_images(i,folder)
                 i += self.chunk_size
                 yield images, img_labels
             except Exception as e:
@@ -83,15 +83,15 @@ class DataGenerator(object):
                 i += self.chunk_size
 
     def generate_training(self):
-        return self.generate_data(self.train_offset, self.test_offset)
+        return self.generate_data(self.train_offset, self.test_offset,'train')
 
     def generate_testing(self):
-        return self.generate_data(self.test_offset, self.validation_offset)
+        return self.generate_data(self.test_offset, self.validation_offset,'test')
 
-    def get_transformed_images(self, curr_offset):
+    def get_transformed_images(self, curr_offset,folder):
         images = []
         for i in range(curr_offset, curr_offset + self.chunk_size):
-            path = 'data_proc/data/train/' + self.attrs[i].split()[0].split("/")[-1]
+            path = 'data_proc/data/'+folder+'/' + self.attrs[i].split()[0].split("/")[-1]
             # print(path)
             img = image.load_img(path, target_size=self.img_shape)
             x = image.img_to_array(img)

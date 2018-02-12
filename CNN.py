@@ -1,16 +1,18 @@
 from __future__ import print_function
 
 import matplotlib.pyplot as plt
+import numpy as np
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense, Activation
 from keras.layers import Input, Flatten
 
-from keras.models import Model
+from keras.models import Model, model_from_json
 from keras.utils import plot_model
+
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 
-def create_model(in_shape=(32, 32, 3)):
+def define_network(in_shape=(32, 32, 3)):
     #TODO add parameter for number of outputs and type categories for softmax
     """
     Creates model for CNN with Keras functional api.
@@ -141,6 +143,24 @@ def merge_history(histories):
 
     return history
 
+def prepare_eval_history(histories):
+    history = {}
+    if len(histories) <= 0:
+        return history
+
+    att_cnt = len(histories[0])
+    # first is aggragate loss, the rest is split half loss and the second half acc
+    mat = np.asarray(histories)
+    history['Agg_loss'] = np.asarray(mat[:,0])
+
+    for i in range(1, int(att_cnt/2) + 1):
+        history['loss' + str(i)] = mat[:,i]
+    for i in range(1, int(att_cnt/2) + 1):
+        history['acc' + str(i)] = mat[:,int(att_cnt/2) + i]
+    return history
+
+
+
 def compute_epoch_history(previous, current):
     """
     Helper method which merges multiple history files from bulk run into single epoch average history.
@@ -158,6 +178,24 @@ def compute_epoch_history(previous, current):
     #         history[key] += h.history[key]
     #
     # return history
+
+def save_model(model,path):
+    with open(path + "model.json", "w") as json_file:
+        json_file.write(model.to_json())
+    # serialize weights to HDF5
+    model.save_weights(path + "model.h5")
+    print("Saved model to disk")
+
+def load_model(path):
+    # load json and create model
+    json_file = open(path+'model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
+    # load weights into new model
+    loaded_model.load_weights(path+"model.h5")
+    print("Loaded model from disk")
+    return loaded_model
 
 
 
