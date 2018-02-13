@@ -14,13 +14,37 @@ batch_size = 32
 in_shape = (64, 64, 3)
 
 
-def time_train_model(model, generator):
+def bulk_time_test():
+    sizes = [32,128,256,512,1024,2048,4096,8192]
+    res = []
+    for bulk_s in sizes:
+        generator = DataGenerator((64, 64), bulk_s)
+        train_gen = generator.generate_training()
+        # training
+        start = datetime.datetime.now()
+        for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
+            break
+        end = datetime.datetime.now()
+        delta = end - start
+        res.append(int(delta.total_seconds() * 1000))
+    import matplotlib.pyplot as plt
+    plt.plot(range(len(sizes)),res,'ro')
+    plt.xticks(range(len(sizes)), sizes)
+    plt.show()
+
+    average = [res[i]/sizes[i] for i in range(len(res))]
+    plt.plot(range(len(sizes)), average,'ro')
+    plt.xticks(range(len(sizes)), sizes)
+    plt.show()
+
+def batch_time_test(model, generator):
     histories_train = []
     train_gen = generator.generate_training()
     res = []
+    sizes = [16,32,48,64,128,256,512]
     # training
     for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
-        for b_size in [16,32,48,64,128,256,512]:
+        for b_size in sizes:
             start = datetime.datetime.now()
             histories_train.append(model.fit(X_train, Y_train, batch_size=b_size, epochs=1))
             end = datetime.datetime.now()
@@ -28,7 +52,8 @@ def time_train_model(model, generator):
             res.append(int(delta.total_seconds() * 1000))
         break
     import matplotlib.pyplot as plt
-    plt.bar([16,32,48,64,128,256,512],res)
+    plt.plot(range(len(sizes)), res, 'ro')
+    plt.xticks(range(len(sizes)), sizes)
     plt.show()
 
 def train_model(model,generator,epoch_id):
@@ -101,14 +126,13 @@ def RunModelBatchTest():
 
     model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
-    # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
 
     for e in range(n_epochs):
         print("epoch %d" % e)
         generator = DataGenerator((64, 64), bulk_size)
         # Training
-        time_train_model(model, generator)
+        batch_time_test(model, generator)
         # Testing
         test_model(model, generator, e)
 
@@ -172,3 +196,5 @@ if __name__ == "__main__":
     # RunLoadedModelWithGenerators()
 
     RunModelBatchTest()
+
+    # bulk_time_test()
