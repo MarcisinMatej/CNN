@@ -143,6 +143,24 @@ def merge_history(histories):
 
     return history
 
+def merge_epoch_history(old,new):
+    """
+    Helper method which merges multiple dictionaries to average value for epoch.
+    :param old : old history dictionary per epoch
+    :param new : new data from the last epoch
+    :return: single history dictionary
+    """
+    if len(new) <= 0:
+        return old
+    if len(old.keys()) <= 0:
+        for key in new[0].keys():
+            old[key] = []
+
+    for key in new.keys():
+        #average new
+        old[key].append(sum(new[key])/len(new[key]))
+    return old
+
 def prepare_eval_history(histories):
     history = {}
     if len(histories) <= 0:
