@@ -4,6 +4,7 @@ from keras.utils import np_utils
 
 from data_proc.DataLoader import load_label_txts, load_folder_txts
 
+data_folder = 'data_proc/data/'
 
 class DataGenerator(object):
     """Generates data for Keras"""
@@ -11,7 +12,7 @@ class DataGenerator(object):
         'Initialization'
         self.img_shape = img_shape
         self.chunk_size = chunk_size
-        self.attr_vals, self.attrs = load_label_txts()
+        self.attr_vals, self.attr_map = load_label_txts()
         # count how many different attributes we will predict
         self.attr_cnt = len(self.attr_vals)
         self.attr_class_cnt = []
@@ -20,9 +21,10 @@ class DataGenerator(object):
             cnt = len(attr_val.split(":")[1].split(","))
             self.attr_class_cnt.append(cnt)
         # split data to training,testing,validation
-        self.train_offset = 0
-        self.test_offset = 0
-        self.validation_offset = 0
+        self.train_ids = []
+        self.test_ids = []
+        self.validation_ids = []
+
         self.find_offsets()
 
     def find_offsets(self):
@@ -31,33 +33,39 @@ class DataGenerator(object):
         Finds offset of training,testing and validation data from config file folders.txt
         :return:
         """
-        i = 0
         folder = load_folder_txts()
+        for line in folder:
+            i = line.split()[-1]
+            if i == "1":
+                self.train_ids.append(line.split()[0].split("/")[-1])
+            elif i == "2":
+                self.test_ids.append(line.split()[0].split("/")[-1])
+            elif i == "3":
+                self.validation_ids.append(line.split()[0].split("/")[-1])
+        print("Done")
 
-        # marker splits data to 3 parts, training-1/testing-2/validation-3
-        while folder[i].split()[-1] != "3":
-            if self.test_offset == 0 and folder[i].split()[-1] == "2":
-                self.test_offset = i
-            i+=1
-        self.validation_offset = i
+        # # marker splits data to 3 parts, training-1/testing-2/validation-3
+        # while folder[i].split()[-1] != "3":
+        #     if self.test_offset == 0 and folder[i].split()[-1] == "2":
+        #         self.test_offset = i
+        #     i+=1
+        # self.validation_offset = i
 
-    def labels_generator(self, curr_offset):
+    def labels_generator(self, list):
         """
         Generate labels from attribute file
         :param curr_offset: starting position in attribute list
         :return: labels for specific batch of data
         """
-        img_labels =[[None for i in range(self.chunk_size)] for j in range(self.attr_cnt)]
+        img_labels =[[] for i in range(self.attr_cnt)]
         #create dictionary of image name and attributes labels
-        for entry_ind in range(curr_offset, curr_offset + self.chunk_size):
-            attr_line = self.attrs[entry_ind]
-            line_arr = attr_line.split()
-            img_name = line_arr[0].split("/")[-1]
+        for entry_id, ind in zip(list,range(len(list))):
+            line_arr = self.attr_map[entry_id]
             #create vectors of ints for each entry of attribute values
             for att_ind in range(self.attr_cnt):
-                attr_value = int(line_arr[att_ind+1]) - 1
-                # immage i attribute j
-                img_labels[att_ind][entry_ind%self.chunk_size] = attr_value
+                # -1 becasue in config file we count from 1
+                # image i attribute j
+                img_labels[att_ind].append(int(line_arr[att_ind]) - 1)
 
         # convert to one hot vector
         to_return = []
@@ -67,15 +75,15 @@ class DataGenerator(object):
         return to_return
         # print(attr_class_cnt)
 
-    def generate_data(self, start_offset, end_offset,folder):
-        i = start_offset
+    def generate_data(self, names, folder):
+        i = 0
         # TODO solve overlap, now it is irrelevant
-        while (i + self.chunk_size) < end_offset:
+        while (i + self.chunk_size) < len(names):
             # try catch for possible problems with image formats
             try:
                 # b_i is index in batch
-                img_labels = self.labels_generator(i)
-                images = self.get_transformed_images(i,folder)
+                img_labels = self.labels_generator(names[i:i+self.chunk_size])
+                images = self.get_transformed_images(names[i:i+self.chunk_size], folder)
                 i += self.chunk_size
                 yield images, img_labels
             except Exception as e:
@@ -83,15 +91,15 @@ class DataGenerator(object):
                 i += self.chunk_size
 
     def generate_training(self):
-        return self.generate_data(self.train_offset, self.test_offset,'train')
+        return self.generate_data(self.train_ids,'train/')
 
     def generate_testing(self):
-        return self.generate_data(self.test_offset, self.validation_offset,'test')
+        return self.generate_data(self.test_ids,'test/')
 
-    def get_transformed_images(self, curr_offset,folder):
+    def get_transformed_images(self,img_names,folder):
         images = []
-        for i in range(curr_offset, curr_offset + self.chunk_size):
-            path = 'data_proc/data/'+folder+'/' + self.attrs[i].split()[0].split("/")[-1]
+        for img_name in img_names:
+            path = data_folder + folder + img_name
             # print(path)
             img = image.load_img(path, target_size=self.img_shape)
             x = image.img_to_array(img)

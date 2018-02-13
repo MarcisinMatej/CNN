@@ -16,7 +16,10 @@ def load_label_txts():
         attr_vals = file_attr_vals.readlines()
     with open(PATH+'attributes.txt') as file_attrs:
         attrs = file_attrs.readlines()
-    return attr_vals, attrs
+    attr_map = {}
+    for attr in attrs:
+        attr_map[attr.split()[0].split("/")[-1]] = attr.split()[1:]
+    return attr_vals, attr_map
 
 
 def matrix_image(image):

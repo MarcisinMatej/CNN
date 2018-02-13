@@ -1,4 +1,5 @@
 import datetime
+import random
 
 from CNN import *
 from keras import optimizers
@@ -80,9 +81,3 @@ if __name__ == "__main__":
     #RunModelBatchTest()
 
     # bulk_time_test()
-
-    sizes = [16, 32, 48, 64, 128]
-    res = [91,47,40,35,27]
-    plt.plot(range(len(sizes)), res, 'ro')
-    plt.xticks(range(len(sizes)), sizes)
-    plt.show()
