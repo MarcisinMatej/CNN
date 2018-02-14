@@ -11,9 +11,17 @@ batch_size = 64
 in_shape = (64, 64, 3)
 
 
-def train_model(model,generator,epoch_id):
+def train_epoch(model, generator, ep_ind):
+    """
+    Procedure to train provided model with provide data from generator
+    in single epoch. After training results are plotted with plot_history(...) function.
+    :param model:
+    :param generator: yields through all training data
+    :param ep_ind: index of epoch
+    """
     histories_train = []
     train_gen = generator.generate_training()
+    ep_hist_train = {}
 
     # training
     for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
@@ -21,34 +29,31 @@ def train_model(model,generator,epoch_id):
         histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
 
     save_model(model, model_path)
-    plot_history(merge_history(histories_train), str(epoch_id)+ 'epoch_train')
+    plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
-def test_model(model,generator,epoch_id):
-    histories_test = []
+def test_epoch(model, generator, epoch_id):
+    """
+    Procedure to test provided model with provide data from generator
+    in single epoch. After evaluation the result is plotted with plot_history(...) function.
+    :param model:
+    :param generator:
+    :param epoch_id:
+    :return:
+    """
+    hist_tst = []
+    ep_hist_tst = {}
     test_gen = generator.generate_testing()
     for X_train, Y_train in test_gen:  # these are chunks of ~bulk pictures
-        histories_test.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
-    plot_history(prepare_eval_history(histories_test), str(epoch_id) + 'epoch_test')
+        hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
+    plot_history(prepare_eval_history(hist_tst), ep_hist_tst, str(epoch_id) + 'epoch_test')
 
 
-def RunModel(train_data,train_labels_one_hot,test_data,test_labels_one_hot):
-    model = define_network()
-    batch_size = 200
-    epochs = 100
-    model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'])
-    history = model.fit(train_data, train_labels_one_hot, batch_size=batch_size, epochs=epochs, verbose=1,
-                         validation_data=(test_data, test_labels_one_hot))
-    # Plot training progress
-    plot_history(history)
-
-    # Score trained model.
-    scores = model.evaluate(test_data, test_labels_one_hot)
-    # scores = model.evaluate(x_test, y_test, verbose=1)
-    print('Test loss:', scores[0])
-    print('Test accuracy:', scores[1])
-
-def RunModelWithGenerators():
+def run_model():
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
     model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
@@ -56,13 +61,16 @@ def RunModelWithGenerators():
     for e in range(n_epochs):
         print("epoch %d" % e)
         generator = DataGenerator((64, 64), bulk_size)
-        train_model(model, generator, e)
+        train_epoch(model, generator, e)
         # Testing
-        test_model(model, generator, e)
+        test_epoch(model, generator, e)
 
 
-def RunLoadedModelWithGenerators():
-
+def run_load_model():
+    """
+    Loads model from saved location and runs it.
+    :return:
+    """
     model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
@@ -72,13 +80,16 @@ def RunLoadedModelWithGenerators():
         print("epoch %d" % e)
         generator = DataGenerator((64, 64), bulk_size)
         # Training
-        train_model(model, generator, e)
+        train_epoch(model, generator, e)
         # Testing
-        test_model(model, generator, e)
+        test_epoch(model, generator, e)
 
 
-
-def RunModelWithVirtualGenerators():
+def run_model_virtual():
+    """
+    Model is freshly created and run with additional virtual examples.
+    :return:
+    """
     model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
@@ -120,7 +131,7 @@ def RunModelWithVirtualGenerators():
         save_model(model,model_path)
         plot_history(merge_history(histories_train), 'epoch_train' + str(e))
         # Testing
-        test_model(model, tmp, e)
+        test_epoch(model, tmp, e)
 
 
 if __name__ == "__main__":
@@ -130,6 +141,6 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    RunModelWithGenerators()
+    run_model()
 
     # RunLoadedModelWithGenerators()

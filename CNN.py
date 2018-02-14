@@ -71,43 +71,40 @@ def plot_model(model):
     plot_model(model, to_file='model.png')
 
 
-def plot_history(history,name):
-    """
-    Produces plot of loss and accuracy per epoch for validation and training data.
-    Values are taken from history.
-    :param history: history returned from merge_histories(), basically dictionary
-    :return:
-    """
+def plot_loss(data, epoch_ind):
     # Loss Curves
     c = 0
     plt.figure()
     ax = plt.subplot(111)
-    for key in history.keys():
+    for key in data.keys():
         if 'loss' in key:
-            ax.plot(history[key], COLORS[c], linewidth=3.0,label=key)
-            c = (c+1) % len(COLORS)
-        # plt.plot(history.history['loss'], 'r', linewidth=3.0)
-        #plt.plot(history['loss'], 'r', linewidth=3.0)
-        #plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
-        #plt.plot(history['val_loss'], 'b', linewidth=3.0)
+            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
+            c = (c + 1) % len(COLORS)
+            # plt.plot(history.history['loss'], 'r', linewidth=3.0)
+            # plt.plot(history['loss'], 'r', linewidth=3.0)
+            # plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
+            # plt.plot(history['val_loss'], 'b', linewidth=3.0)
 
     # Shrink current axis's height by 10% on the bottom
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
-    ax.legend(loc='upper center',ncol=4, bbox_to_anchor=(0.5, -0.05))
+    ax.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, -0.05))
     plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Loss', fontsize=16)
     plt.title('Loss Curves', fontsize=16)
-    plt.savefig(figures_path + 'loss' + name)
+    plt.savefig(figures_path + epoch_ind + "_loss")
+    plt.close('all')
 
+
+def plot_accuracy(data, epoch_ind):
     # Accuracy Curves
     c = 0
     plt.figure(figsize=[8, 6])
     ax = plt.subplot(111)
-    for key in history.keys():
+    for key in data.keys():
         if 'acc' in key:
-            ax.plot(history[key], COLORS[c], linewidth=3.0,label=key)
+            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
             c = (c + 1) % len(COLORS)
             # #plt.plot(history.history['acc'], 'r', linewidth=3.0)
             # plt.plot(history['acc'], 'r', linewidth=3.0)
@@ -121,8 +118,27 @@ def plot_history(history,name):
     plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     plt.title('Accuracy Curves', fontsize=16)
-    plt.savefig(figures_path + 'acc' + name)
+    plt.savefig(figures_path + epoch_ind + '_acc')
+    plt.close('all')
 
+
+def plot_history(history, agg_history, epoch_ind):
+    """
+    Produces plot of loss and accuracy per epoch for validation and training data.
+    Values are taken from history.
+    :param history: history returned from merge_histories(), basically dictionary of loss/accuracy.
+    Contains values of metrics per bulk size
+    :param agg_history: average metrics per epoch
+    :param epoch_ind: index of epoch
+    :return:
+    """
+    # plot metrics in the last epoch
+    plot_loss(history, epoch_ind)
+    plot_accuracy(history, epoch_ind)
+    # plot avegare metrics thorugh all epochs
+    agg_history = merge_epoch_history(agg_history,history)
+    plot_loss(agg_history, "aggregate")
+    plot_accuracy(agg_history, "aggregate")
     plt.close('all')
 
 
@@ -182,21 +198,22 @@ def prepare_eval_history(histories):
 
 def compute_epoch_history(previous, current):
     """
-    Helper method which merges multiple history files from bulk run into single epoch average history.
-    :param histories: array of histories ordered in order of merging (needed for epoch index update)
-    :return: single history dictionary
+    Helper method which computes average loss and accuracy in the last epoch.
+    Then this average is added to the history through epochs.
+    :param previous: dictionary of average loss/accuracy through epochs
+    :param current: dictionary of loss/accuracy of the last epoch per bulk
+    :return: single history dictionary with average loss/accuracy per epoch
     """
     if len(current) <= 0:
         return {}
     if len(previous.keys()) <= 0 :
         for key in current[0].history.keys():
             previous[key] = []
-    #TODO finish
-    # for h in current:
-    #     for key in h.history.keys():
-    #         history[key] += h.history[key]
-    #
-    # return history
+
+    for key in previous.keys():
+        previous[key].append(np.average(current[key]))
+
+    return previous
 
 def save_model(model,path):
     with open(path + "model.json", "w") as json_file:

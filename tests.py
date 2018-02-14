@@ -1,18 +1,14 @@
 import datetime
-import random
-
 from CNN import *
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
-
 
 bulk_size = 1024
 model_path = 'model/'
 n_epochs = 250
 batch_size = 32
 in_shape = (64, 64, 3)
-
 
 def bulk_time_test():
     sizes = [32,128,256,512,1024,2048,4096,8192]
