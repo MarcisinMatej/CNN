@@ -11,6 +11,7 @@ from keras.utils import plot_model
 
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+figures_path = 'figures/'
 
 def define_network(in_shape=(32, 32, 3)):
     #TODO add parameter for number of outputs and type categories for softmax
@@ -98,7 +99,7 @@ def plot_history(history,name):
     plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Loss', fontsize=16)
     plt.title('Loss Curves', fontsize=16)
-    plt.savefig('figures/loss' + name)
+    plt.savefig(figures_path + 'loss' + name)
 
     # Accuracy Curves
     c = 0
@@ -120,7 +121,7 @@ def plot_history(history,name):
     plt.xlabel('Chunks ', fontsize=16)
     plt.ylabel('Accuracy', fontsize=16)
     plt.title('Accuracy Curves', fontsize=16)
-    plt.savefig('figures/acc' + name)
+    plt.savefig(figures_path + 'acc' + name)
 
     plt.close('all')
 
