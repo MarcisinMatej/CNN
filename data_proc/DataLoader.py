@@ -34,6 +34,17 @@ def matrix_image(image):
     return image
 
 
+def get_attributes_desc():
+    # count how many classes are in each label (length of one-hot true value vector)
+    atrs_desc = []
+    with open(PATH + 'attribute_values.txt') as file_attr_vals:
+        for line in file_attr_vals.readlines():
+            cnt = len(line.split(":")[1].split(","))
+            atrs_desc.append(cnt)
+    return atrs_desc
+
+
+
 def flatten_image(image_path):
     '''
     Flattens image to 3D flat vector

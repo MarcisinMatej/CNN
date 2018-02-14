@@ -9,6 +9,7 @@ from keras.layers import Input, Flatten
 from keras.models import Model, model_from_json
 from keras.utils import plot_model
 
+from data_proc.DataLoader import get_attributes_desc
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 figures_path = 'figures/'
@@ -36,23 +37,24 @@ def define_network(in_shape=(32, 32, 3)):
     conv6 = Conv2D(128, (4, 4), padding='same',activation='relu')(conv5)
     conv7 = Conv2D(2048, (5, 5), padding='same',activation='relu')(conv6)
     conv8 = Conv2D(2048, (1, 1), padding='same',activation='relu')(conv7)
-
-    #TODO
-    # update to dynamic values depending on attribute file
-    # output layers
     flatten = Flatten()(conv8)
     output_layers = []
-    out1 = Dense(2, activation='softmax',name="out1")(flatten)
-    output_layers.append(out1)
-    out2 = Dense(2, activation='softmax',name="out2")(flatten)
-    output_layers.append(out2)
-    out3 = Dense(2, activation='softmax',name="out3")(flatten)
-    output_layers.append(out3)
-    out4 = Dense(2, activation='softmax',name="out4")(flatten)
-    output_layers.append(out4)
-    out5 = Dense(5, activation='softmax',name="out5")(flatten)
-    output_layers.append(out5)
+    # output layers
+    # out1 = Dense(2, activation='softmax',name="out1")(flatten)
+    # output_layers.append(out1)
+    # out2 = Dense(2, activation='softmax',name="out2")(flatten)
+    # output_layers.append(out2)
+    # out3 = Dense(2, activation='softmax',name="out3")(flatten)
+    # output_layers.append(out3)
+    # out4 = Dense(2, activation='softmax',name="out4")(flatten)
+    # output_layers.append(out4)
+    # out5 = Dense(5, activation='softmax',name="out5")(flatten)
+    # output_layers.append(out5)
 
+    atrs_desc = get_attributes_desc()
+    for cnt, ind in zip(atrs_desc, range(len(atrs_desc))):
+        _name = "out"+str(ind)
+        output_layers.append(Dense(cnt, activation='softmax', name=_name)(flatten))
     #TODO here we must also change to single output
     model = Model(inputs=input, outputs=output_layers)
     # summarize layers
