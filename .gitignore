@@ -4,6 +4,6 @@ data_proc/__pycache__
 data_proc/data
 .idea/inspectionProfiles .idea/misc.xml .idea/modules.xml .idea/Network.iml .idea/vcs.xml .idea/workspace.xml
 .idea/
-figures/*
+figures/*.png
 *.h5
 *.json
