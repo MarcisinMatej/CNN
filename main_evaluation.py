@@ -64,7 +64,7 @@ def run_difusion_matrix_test():
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
 
-    generator = DataGenerator((64, 64),64)# bulk_size)
+    generator = DataGenerator((64, 64), bulk_size)
     preds,labs = difusion_matrix(model, generator.generate_testing())
     generate_dif_mat(preds,labs)
 

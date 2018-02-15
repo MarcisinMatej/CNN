@@ -4,7 +4,7 @@ from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
-bulk_size = 1024
+bulk_size = 4096
 model_path = 'models/'
 n_epochs = 250
 batch_size = 64
