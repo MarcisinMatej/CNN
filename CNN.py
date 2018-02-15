@@ -3,7 +3,7 @@ from __future__ import print_function
 import matplotlib.pyplot as plt
 import numpy as np
 from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Dense, Activation
+from keras.layers import Dense
 from keras.layers import Input, Flatten
 
 from keras.models import Model, model_from_json
@@ -60,13 +60,13 @@ def define_network(in_shape=(32, 32, 3)):
     # summarize layers
     print(model.summary())
     #TODO plot model
-#    plot_model(model)
+    plot_model(model)
     return model
 
 
 def plot_model(model):
     """
-    Produces plot of model
+    Produces plot of model, see keras.plot_model
     :param model:
     :return: saves plot image
     """

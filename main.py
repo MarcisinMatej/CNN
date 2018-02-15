@@ -5,7 +5,7 @@ import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
 bulk_size = 1024
-model_path = 'model/'
+model_path = 'models/'
 n_epochs = 250
 batch_size = 64
 in_shape = (64, 64, 3)
