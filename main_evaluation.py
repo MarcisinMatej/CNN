@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 
-def difusion_matrix(model,generator):
+def difusion_matrix(model, generator):
     predictions = []
     labels = []
     for X_data, Y_data in generator:  # these are chunks of ~bulk pictures
@@ -25,7 +25,7 @@ def difusion_matrix(model,generator):
     return predictions,labels
 
 
-def generate_dif_mat(predictions,labels):
+def generate_dif_mat(predictions, labels):
     matrices = []
     att_cnt = len(predictions)
     #todo add iff predictions empty
@@ -44,7 +44,7 @@ def generate_dif_mat(predictions,labels):
     plt.close("all")
 
 
-def show_matrix(matrix,att_ind):
+def show_matrix(matrix, att_ind):
     fig, ax = plt.subplots()
     ax.matshow(matrix, cmap=plt.cm.Blues)
     plt.xlabel("Predictions")
@@ -59,12 +59,12 @@ def show_matrix(matrix,att_ind):
     plt.savefig(figures_path + "confusions/att_" + str(att_ind))
 
 
-def run_difusion_matrix_validation(model,generator):
+def run_difusion_matrix_validation(model, generator):
     preds,labs = difusion_matrix(model, generator.generate_validation())
     generate_dif_mat(preds,labs)
 
 
-def run_difusion_matrix_train(model,generator):
+def run_difusion_matrix_train(model, generator):
     preds,labs = difusion_matrix(model, generator.generate_training())
     generate_dif_mat(preds,labs)
 
@@ -75,6 +75,7 @@ def test_model(model, generator):
     for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
         hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
     plot_history(prepare_eval_history(hist_tst), {}, 'testing', agg=False)
+
 
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory

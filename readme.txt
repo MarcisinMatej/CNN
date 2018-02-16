@@ -1,11 +1,9 @@
 TODO natrenovat 64x64 spravit graf konvergence pro kazdy attribut(x epocha,y chyba)
 	spocitat trenovaci,testovaci,validacni
-	na testovacich datach spravit - confusion mattrix (chyby true possitive/false positive)
 
 zmerat ako rychlo sa generuju virtualne obrazky
 
 TODO 1 doriesit adresare a cesty k datam
-TODO 3 validation data generator
 TODO 4 generator expand 
 TODO 5 pozriet sa ci sa dajako neda spojit moj generator a Keras (data augmentation)
 	possibility 1 : easy, augmet one picture at time
