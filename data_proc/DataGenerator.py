@@ -93,6 +93,9 @@ class DataGenerator(object):
     def generate_training(self):
         return self.generate_data(self.train_ids,'train/')
 
+    def generate_validation(self):
+        return self.generate_data(self.train_ids,'validation/')
+
     def generate_testing(self):
         return self.generate_data(self.test_ids,'test/')
 

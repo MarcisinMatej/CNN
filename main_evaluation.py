@@ -1,8 +1,8 @@
 from keras import optimizers
 
-from CNN import load_model
+from CNN import load_model, plot_history, prepare_eval_history
 from data_proc.DataGenerator import DataGenerator
-from main import batch_size, model_path, bulk_size, figures_path
+from main_training import batch_size, model_path, bulk_size, figures_path
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -24,6 +24,7 @@ def difusion_matrix(model,generator):
             labels[i] = np.concatenate((labels[i], Y_data[i]),axis=0)
     return predictions,labels
 
+
 def generate_dif_mat(predictions,labels):
     matrices = []
     att_cnt = len(predictions)
@@ -42,10 +43,9 @@ def generate_dif_mat(predictions,labels):
         show_matrix(matrices[i], i)
     plt.close("all")
 
+
 def show_matrix(matrix,att_ind):
-
     fig, ax = plt.subplots()
-
     ax.matshow(matrix, cmap=plt.cm.Blues)
     plt.xlabel("Predictions")
     plt.ylabel("True labels")
@@ -59,25 +59,22 @@ def show_matrix(matrix,att_ind):
     plt.savefig(figures_path + "confusions/att_" + str(att_ind))
 
 
-def run_difusion_matrix_test():
-    model = load_model(model_path)
-    opt = optimizers.Adam(lr=0.0000015)
-    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-
-    generator = DataGenerator((64, 64), bulk_size)
-    preds,labs = difusion_matrix(model, generator.generate_testing())
+def run_difusion_matrix_validation(model,generator):
+    preds,labs = difusion_matrix(model, generator.generate_validation())
     generate_dif_mat(preds,labs)
 
 
-
-def run_difusion_matrix_train():
-    model = load_model(model_path)
-    opt = optimizers.Adam(lr=0.0000015)
-    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-
-    generator = DataGenerator((64, 64),64)# bulk_size)
+def run_difusion_matrix_train(model,generator):
     preds,labs = difusion_matrix(model, generator.generate_training())
     generate_dif_mat(preds,labs)
+
+
+def test_model(model, generator):
+    hist_tst = []
+    tst_gen = generator.generate_testing()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
+    plot_history(prepare_eval_history(hist_tst), {}, 'testing', agg=False)
 
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
@@ -86,5 +83,11 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_difusion_matrix_test()
-    run_difusion_matrix_train()
+    model = load_model(model_path)
+    opt = optimizers.Adam(lr=0.0000015)
+    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
+    generator = DataGenerator((64, 64), bulk_size)
+
+    run_difusion_matrix_validation(model,generator)
+    run_difusion_matrix_train(model,generator)
+    test_model(model,generator)

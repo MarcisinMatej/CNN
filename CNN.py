@@ -124,7 +124,7 @@ def plot_accuracy(data, epoch_ind):
     plt.close('all')
 
 
-def plot_history(history, agg_history, epoch_ind):
+def plot_history(history, agg_history, epoch_ind,agg=True):
     """
     Produces plot of loss and accuracy per epoch for validation and training data.
     Values are taken from history.
@@ -137,10 +137,11 @@ def plot_history(history, agg_history, epoch_ind):
     # plot metrics in the last epoch
     plot_loss(history, epoch_ind)
     plot_accuracy(history, epoch_ind)
-    # plot avegare metrics thorugh all epochs
-    agg_history = merge_epoch_history(agg_history,history)
-    plot_loss(agg_history, "aggregate")
-    plot_accuracy(agg_history, "aggregate")
+    if agg:
+        # plot avegare metrics thorugh all epochs
+        agg_history = merge_epoch_history(agg_history,history)
+        plot_loss(agg_history, "aggregate")
+        plot_accuracy(agg_history, "aggregate")
     plt.close('all')
 
 
@@ -162,23 +163,23 @@ def merge_history(histories):
 
     return history
 
-def merge_epoch_history(old,new):
+def merge_epoch_history(previous, current):
     """
     Helper method which merges multiple dictionaries to average value for epoch.
-    :param old : old history dictionary per epoch
-    :param new : new data from the last epoch
+    :param previous : old history dictionary per epoch
+    :param current : new data from the last epoch
     :return: single history dictionary
     """
-    if len(new) <= 0:
-        return old
-    if len(old.keys()) <= 0:
-        for key in new[0].keys():
-            old[key] = []
+    if len(current.keys()) <= 0:
+        return previous
+    if len(previous.keys()) <= 0:
+        for key in current.keys():
+            previous[key] = []
 
-    for key in new.keys():
+    for key in current.keys():
         #average new
-        old[key].append(sum(new[key])/len(new[key]))
-    return old
+        previous[key].append(sum(current[key]) / len(current[key]))
+    return previous
 
 def prepare_eval_history(histories):
     history = {}
@@ -195,27 +196,6 @@ def prepare_eval_history(histories):
     for i in range(1, int(att_cnt/2) + 1):
         history['acc' + str(i)] = mat[:,int(att_cnt/2) + i]
     return history
-
-
-
-def compute_epoch_history(previous, current):
-    """
-    Helper method which computes average loss and accuracy in the last epoch.
-    Then this average is added to the history through epochs.
-    :param previous: dictionary of average loss/accuracy through epochs
-    :param current: dictionary of loss/accuracy of the last epoch per bulk
-    :return: single history dictionary with average loss/accuracy per epoch
-    """
-    if len(current) <= 0:
-        return {}
-    if len(previous.keys()) <= 0 :
-        for key in current[0].history.keys():
-            previous[key] = []
-
-    for key in previous.keys():
-        previous[key].append(np.average(current[key]))
-
-    return previous
 
 def save_model(model,path):
     with open(path + "model.json", "w") as json_file:

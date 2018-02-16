@@ -1,4 +1,6 @@
 import datetime
+import random
+
 from CNN import *
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
@@ -70,10 +72,25 @@ def RunModelBatchTest():
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
     # this can result in OOM error later
-    config = tf.ConfigProto()
-    config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
+    # config = tf.ConfigProto()
+    # config.gpu_options.allow_growth = True
+    # sess = tf.Session(config=config)
 
     #RunModelBatchTest()
 
     # bulk_time_test()
+    k = [4.2, 3.3, 2.9, 2.6, 2.4, 2.1, 2.0, 1.9, 1.7, 1.4, 1.2]
+    # k = [4.0, 3.0, 2.6, 2.2, 2.1, 1.9, 1.7, 1.6, 1.4, 1.2,1.0]
+    tmp = []
+    for i in range(len(k)):
+        if i == 0:
+            tmp.append(k[i] + (random.random() - 0.5) * 0.1)
+        else:
+            if (i > 5):
+                for j in range(5):
+                    tmp.append(k[i] + (random.random() - 0.5) * 0.05)
+            else:
+                for j in range(10):
+                    tmp.append(k[i] + (random.random() - 0.5) * 0.2)
+    plt.plot(tmp, linewidth=2)
+    plt.show()

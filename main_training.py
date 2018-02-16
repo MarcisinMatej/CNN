@@ -4,7 +4,7 @@ from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
-bulk_size = 4096
+bulk_size = 2048
 model_path = 'models/'
 n_epochs = 250
 batch_size = 64
@@ -32,9 +32,9 @@ def train_epoch(model, generator, ep_ind):
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
-def test_epoch(model, generator, epoch_id):
+def validate_epoch(model, generator, epoch_id):
     """
-    Procedure to test provided model with provide data from generator
+    Procedure to validate provided model with provide data from generator
     in single epoch. After evaluation the result is plotted with plot_history(...) function.
     :param model:
     :param generator:
@@ -43,10 +43,10 @@ def test_epoch(model, generator, epoch_id):
     """
     hist_tst = []
     ep_hist_tst = {}
-    test_gen = generator.generate_testing()
-    for X_train, Y_train in test_gen:  # these are chunks of ~bulk pictures
+    val_gen = generator.generate_validation()
+    for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
         hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
-    plot_history(prepare_eval_history(hist_tst), ep_hist_tst, str(epoch_id) + 'epoch_test')
+    plot_history(prepare_eval_history(hist_tst), ep_hist_tst, str(epoch_id) + 'epoch_validation')
 
 
 def run_model():
@@ -62,8 +62,8 @@ def run_model():
         print("epoch %d" % e)
         generator = DataGenerator((64, 64), bulk_size)
         train_epoch(model, generator, e)
-        # Testing
-        test_epoch(model, generator, e)
+        # Validing epoch
+        validate_epoch(model, generator, e)
 
 
 def run_load_model():
@@ -81,8 +81,8 @@ def run_load_model():
         generator = DataGenerator((64, 64), bulk_size)
         # Training
         train_epoch(model, generator, e)
-        # Testing
-        test_epoch(model, generator, e)
+        # Validating
+        validate_epoch(model, generator, e)
 
 
 def run_model_virtual():
@@ -130,8 +130,8 @@ def run_model_virtual():
 
         save_model(model,model_path)
         plot_history(merge_history(histories_train), 'epoch_train' + str(e))
-        # Testing
-        test_epoch(model, tmp, e)
+        # Validating
+        validate_epoch(model, tmp, e)
 
 
 if __name__ == "__main__":
