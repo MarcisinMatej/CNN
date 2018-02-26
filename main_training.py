@@ -9,6 +9,7 @@ model_path = 'models/'
 n_epochs = 250
 batch_size = 64
 in_shape = (64, 64, 3)
+VIRT_GEN_STOP = 1
 
 
 def train_epoch(model, generator, ep_ind,ep_hist_train):
@@ -91,14 +92,14 @@ def run_model_virtual():
     """
     model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
-    # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
+    #TODO aggregate epoch plot
     ep_hist_train = {}
     ep_hist_val = {}
 
     histories_train = []
     datagen = ImageDataGenerator(
-        featurewise_center=True,  # set input mean to 0 over the dataset
+        featurewise_center=False,  # set input mean to 0 over the dataset
         samplewise_center=False,  # set each sample mean to 0
         featurewise_std_normalization=True,  # divide inputs by std of the dataset
         samplewise_std_normalization=False,  # divide each input by its std
@@ -109,15 +110,8 @@ def run_model_virtual():
         horizontal_flip=True,  # randomly flip images
         vertical_flip=False)  # randomly flip images
 
-    #TODO what is representable sample???
+    # only needed in case of feturewise_center/whitening...
     # datagen.fit(X_sample)  # let's say X_sample is a small-ish but statistically representative sample of your data
-
-    # let's say you have an ImageNet generator that yields ~10k samples at a time.
-    # for e in range(n_epochs):
-    #     print("epoch %d" % e)
-    #     for X_train, Y_train in ImageNet():  # these are chunks of ~10k pictures
-    #         for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=32):  # these are chunks of 32 samples
-    #             loss = model.train(X_batch, Y_batch)
 
     for e in range(n_epochs):
         print("epoch %d" % e)
@@ -125,9 +119,14 @@ def run_model_virtual():
         train_gen = tmp.generate_training()
         # training
         for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
+            gen_cnt = 0
             for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=32):  # these are chunks of 32 samples
-            #TODO here we can select just 1 attribute for training
                 histories_train.append(model.fit(X_batch, Y_batch, batch_size=batch_size, epochs=1))
+                gen_cnt +=1
+                if gen_cnt >= VIRT_GEN_STOP:
+                # we need to break the loop by hand because
+                # the generator loops indefinitely
+                    break
 
         save_model(model,model_path)
         plot_history(merge_history(histories_train), 'epoch_train' + str(e))
@@ -142,6 +141,6 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_model()
-
+    # run_model()
+    run_model_virtual()
     # RunLoadedModelWithGenerators()

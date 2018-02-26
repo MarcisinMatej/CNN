@@ -15,9 +15,12 @@ COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 figures_path = 'figures/'
 
 def define_network(in_shape=(32, 32, 3)):
-    #TODO add parameter for number of outputs and type categories for softmax
     """
     Creates model for CNN with Keras functional api.
+    Model graph is fixed. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
     :param in_shape: tuple (x,y,z) of input shape for model
     :return: keras model
     """
@@ -74,6 +77,13 @@ def plot_model(model):
 
 
 def plot_loss(data, epoch_ind):
+    """
+    Plots loss curves from data dictionary.
+    :param data: dictionary in form, where each key has loss in its name
+     e.g. : 'string_loss':[list of integers]
+    :param epoch_ind: index of epoch
+    :return: saved plot as png file which name is starting by epoch_index
+    """
     # Loss Curves
     c = 0
     plt.figure()
@@ -100,6 +110,13 @@ def plot_loss(data, epoch_ind):
 
 
 def plot_accuracy(data, epoch_ind):
+    """
+        Plots accuracy curves from data dictionary.
+        :param data: dictionary in form, where each key has 'acc' substring in its name
+         e.g. : 'string_acc':[list of integers]
+        :param epoch_ind: index of epoch
+        :return: saved plot as png file which name is starting by epoch_index
+        """
     # Accuracy Curves
     c = 0
     plt.figure(figsize=[8, 6])
@@ -198,6 +215,13 @@ def prepare_eval_history(histories):
     return history
 
 def save_model(model,path):
+    """
+    Saves KERAS model to designated location. Model is saved
+    as json_file and weights are separately in model.h5 file
+    :param model: model to save
+    :param path: location to save model
+    :return:
+    """
     with open(path + "model.json", "w") as json_file:
         json_file.write(model.to_json())
     # serialize weights to HDF5
@@ -205,6 +229,12 @@ def save_model(model,path):
     print("Saved model to disk")
 
 def load_model(path):
+    """
+    Loads KERAS model from designated location. Model is loaded
+    from json_file and weights are separately loaded from model.h5 file.
+    :param path: path to folder with 'model.json' file and 'model.h5' files.
+    :return: loaded model with weights
+    """
     # load json and create model
     json_file = open(path+'model.json', 'r')
     loaded_model_json = json_file.read()
