@@ -93,45 +93,23 @@ def run_model_virtual():
     model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
-    #TODO aggregate epoch plot
     ep_hist_train = {}
     ep_hist_val = {}
-
-    histories_train = []
-    datagen = ImageDataGenerator(
-        featurewise_center=False,  # set input mean to 0 over the dataset
-        samplewise_center=False,  # set each sample mean to 0
-        featurewise_std_normalization=True,  # divide inputs by std of the dataset
-        samplewise_std_normalization=False,  # divide each input by its std
-        zca_whitening=False,  # apply ZCA whitening
-        rotation_range=20,  # randomly rotate images in the range (degrees, 0 to 180)
-        width_shift_range=0.2,  # randomly shift images horizontally (fraction of total width)
-        height_shift_range=0.2,  # randomly shift images vertically (fraction of total height)
-        horizontal_flip=True,  # randomly flip images
-        vertical_flip=False)  # randomly flip images
-
-    # only needed in case of feturewise_center/whitening...
-    # datagen.fit(X_sample)  # let's say X_sample is a small-ish but statistically representative sample of your data
-
     for e in range(n_epochs):
         print("epoch %d" % e)
-        tmp = DataGenerator((64, 64), bulk_size)
-        train_gen = tmp.generate_training()
+        generator = DataGenerator((64, 64), bulk_size)
+        histories_train = []
+        train_gen = generator.virtual_train_generator()
+
         # training
         for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
-            gen_cnt = 0
-            for X_batch, Y_batch in datagen.flow(X_train, Y_train, batch_size=32):  # these are chunks of 32 samples
-                histories_train.append(model.fit(X_batch, Y_batch, batch_size=batch_size, epochs=1))
-                gen_cnt +=1
-                if gen_cnt >= VIRT_GEN_STOP:
-                # we need to break the loop by hand because
-                # the generator loops indefinitely
-                    break
+            # TODO here we can select just 1 attribute for training
+            histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
 
-        save_model(model,model_path)
-        plot_history(merge_history(histories_train), 'epoch_train' + str(e))
-        # Validating
-        validate_epoch(model, tmp, e)
+        save_model(model, model_path)
+        plot_history(merge_history(histories_train), ep_hist_train, str(e) + 'epoch_train')
+        # Validing epoch
+        validate_epoch(model, generator, e, ep_hist_val)
 
 
 if __name__ == "__main__":

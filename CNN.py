@@ -63,11 +63,11 @@ def define_network(in_shape=(32, 32, 3)):
     # summarize layers
     print(model.summary())
     #TODO plot model
-    plot_model(model)
+    _plot_model(model)
     return model
 
 
-def plot_model(model):
+def _plot_model(model):
     """
     Produces plot of model, see keras.plot_model
     :param model:
