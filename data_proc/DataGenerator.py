@@ -31,7 +31,6 @@ class DataGenerator(object):
         self.find_split_ids()
 
     def find_split_ids(self):
-        #TODO nacist si tri pole indexov trenovaci/testovaci/validacni
         """
         Finds ids of training,testing and validation data from config file folders.txt
         :return:
@@ -92,23 +91,6 @@ class DataGenerator(object):
                 print(str(e))
                 i += self.chunk_size
 
-    def generate_data_train_string(self):
-        """
-        Returns chunks of pictures with pictures names for virtual generator.
-        :return:
-        """
-        i = 0
-        # TODO solve overlap, now it is irrelevant
-        while (i + self.chunk_size) < len(self.train_ids):
-            # try catch for possible problems with image formats
-            try:
-                images = self.get_transformed_images(self.train_ids[i:i+self.chunk_size], 'train/')
-                i += self.chunk_size
-                yield images, self.train_ids[i:i+self.chunk_size]
-            except Exception as e:
-                print(str(e))
-                i += self.chunk_size
-
     def generate_training(self):
         return self.generate_data(self.train_ids,'train/')
 
@@ -130,6 +112,23 @@ class DataGenerator(object):
 
         return np.vstack(images)
 
+    def generate_data_labeled(self):
+        """
+        Returns chunks of pictures with pictures names for virtual generator.
+        :return:
+        """
+        i = 0
+        # TODO solve overlap, now it is irrelevant
+        while (i + self.chunk_size) < len(self.train_ids):
+            # try catch for possible problems with image formats
+            try:
+                images = self.get_transformed_images(self.train_ids[i:i+self.chunk_size], 'train/')
+                i += self.chunk_size
+                yield images, self.train_ids[i:i+self.chunk_size]
+            except Exception as e:
+                print(str(e))
+                i += self.chunk_size
+
     def virtual_train_generator(self):
         datagen = ImageDataGenerator(
             featurewise_center=False,  # set input mean to 0 over the dataset
@@ -147,7 +146,7 @@ class DataGenerator(object):
         # datagen.fit(X_sample)  # let's say X_sample is a small-ish but statistically representative sample of your data
 
         # TODO possible add limit
-        train_gen = self.generate_data_train_string()
+        train_gen = self.generate_data_labeled()
         # training
         for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
             gen_cnt = 0

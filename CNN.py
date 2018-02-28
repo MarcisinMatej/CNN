@@ -13,6 +13,7 @@ from data_proc.DataLoader import get_attributes_desc
 
 COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 figures_path = 'figures/'
+history_path = "histories/"
 
 def define_network(in_shape=(32, 32, 3)):
     """
@@ -63,7 +64,7 @@ def define_network(in_shape=(32, 32, 3)):
     # summarize layers
     print(model.summary())
     #TODO plot model
-    _plot_model(model)
+    # _plot_model(model)
     return model
 
 
@@ -141,7 +142,7 @@ def plot_accuracy(data, epoch_ind):
     plt.close('all')
 
 
-def plot_history(history, agg_history, epoch_ind,agg=True):
+def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_flg=True):
     """
     Produces plot of loss and accuracy per epoch for validation and training data.
     Values are taken from history.
@@ -151,16 +152,19 @@ def plot_history(history, agg_history, epoch_ind,agg=True):
     :param epoch_ind: index of epoch
     :return:
     """
-    # plot metrics in the last epoch
-    plot_loss(history, epoch_ind)
-    plot_accuracy(history, epoch_ind)
+    if plot_flag:
+        # plot metrics in the last epoch
+        plot_loss(history, epoch_ind)
+        plot_accuracy(history, epoch_ind)
+        plt.close('all')
     if agg:
         # plot avegare metrics thorugh all epochs
         agg_history = merge_epoch_history(agg_history,history)
         plot_loss(agg_history, "aggregate")
         plot_accuracy(agg_history, "aggregate")
-    plt.close('all')
-
+        plt.close('all')
+    if ser_flg:
+        serialize_history(history,epoch_ind)
 
 def merge_history(histories):
     """
@@ -245,7 +249,14 @@ def load_model(path):
     print("Loaded model from disk")
     return loaded_model
 
+def serialize_history(dict,ep_ind):
+    # Save
+    np.save(history_path + str(ep_ind) + "_hist.npy", dict)
 
+
+def load_history(path_loc):
+    # Save
+    return np.load(path_loc).item()
 
 
 

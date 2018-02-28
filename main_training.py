@@ -6,13 +6,14 @@ from keras.preprocessing.image import ImageDataGenerator
 
 bulk_size = 2048
 model_path = 'models/'
-n_epochs = 250
+n_epochs = 100
 batch_size = 64
 in_shape = (64, 64, 3)
 VIRT_GEN_STOP = 1
+BEST_LOSS = 999999999
 
 
-def train_epoch(model, generator, ep_ind,ep_hist_train):
+def train_epoch(model, generator, ep_ind, ep_hist_train):
     """
     Procedure to train provided model with provide data from generator
     in single epoch. After training results are plotted with plot_history(...) function.
@@ -32,6 +33,13 @@ def train_epoch(model, generator, ep_ind,ep_hist_train):
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
+def get_agg_loss(data):
+    agg = 0
+    for key in data.keys():
+        if 'loss' == key:
+            agg = data[key][-1]
+    return agg
+
 def validate_epoch(model, generator, epoch_id,ep_hist_val):
     """
     Procedure to validate provided model with provide data from generator
@@ -41,12 +49,18 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
     :param epoch_id:
     :return:
     """
+    global BEST_LOSS
     hist_val = []
     val_gen = generator.generate_validation()
     for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
         hist_val.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
     plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
-
+    # save model if we get better validation loss
+    agg = get_agg_loss(hist_val)
+    if agg < BEST_LOSS:
+        print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
+        save_model(model, model_path+"best_")
+        BEST_LOSS = agg
 
 def run_model():
     """
@@ -58,9 +72,9 @@ def run_model():
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
+    generator = DataGenerator((64, 64), bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
-        generator = DataGenerator((64, 64), bulk_size)
         train_epoch(model, generator, e, ep_hist_train)
         # Validing epoch
         validate_epoch(model, generator, e, ep_hist_val)
@@ -75,10 +89,10 @@ def run_load_model():
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    generator = DataGenerator((64, 64), bulk_size)
 
     for e in range(n_epochs):
         print("epoch %d" % e)
-        generator = DataGenerator((64, 64), bulk_size)
         # Training
         train_epoch(model, generator, e, ep_hist_train)
         # Validating
@@ -95,9 +109,9 @@ def run_model_virtual():
     model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
+    generator = DataGenerator((64, 64), bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
-        generator = DataGenerator((64, 64), bulk_size)
         histories_train = []
         train_gen = generator.virtual_train_generator()
 
@@ -119,6 +133,8 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # run_model()
-    run_model_virtual()
+    run_model()
+    # run_model_virtual()
     # RunLoadedModelWithGenerators()
+    # path="histories/0epoch_train_hist.npy"
+    # print(load_history(path))
