@@ -4,10 +4,10 @@ from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 from keras.preprocessing.image import ImageDataGenerator
 
-bulk_size = 2048
+bulk_size = 10240
 model_path = 'models/'
 n_epochs = 100
-batch_size = 64
+batch_size = 96
 in_shape = (64, 64, 3)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
@@ -88,13 +88,14 @@ def run_load_model():
     Loads model from saved location and runs it.
     :return:
     """
+    start_ep = 9
     ep_hist_train,ep_hist_val, model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     generator = DataGenerator((64, 64), bulk_size)
 
-    for e in range(n_epochs):
+    for e in range(start_ep,n_epochs):
         print("epoch %d" % e)
         # Training
         train_epoch(model, generator, e, ep_hist_train)
@@ -136,8 +137,9 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_model()
+    # run_model()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
+    run_load_model()

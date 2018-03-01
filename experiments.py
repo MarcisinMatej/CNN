@@ -1,10 +1,23 @@
+"""
+Varios test like speed test, data statistics etc...
+"""
+
 import datetime
 import random
 
 from CNN import *
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
-import tensorflow as tf
+import plotly.plotly as py
+import plotly.graph_objs as go
+from plotly.tools import FigureFactory as FF
+
+import numpy as np
+import pandas as pd
+import scipy
+from collections import Counter
+
+from data_proc.DataLoader import load_label_txts
 
 bulk_size = 1024
 model_path = 'model/'
@@ -67,7 +80,17 @@ def RunModelBatchTest():
         # Training
         batch_time_test(model, generator)
 
+def count_freq(data):
+    return
 
+def RunDataStats():
+    attr_vals, lbs_map = load_label_txts()
+    tmp = []
+    for arr in lbs_map.values():
+        tmp.append(arr)
+    mat = np.asarray(tmp)
+    x = mat[:,1]
+    print(Counter(x))
 
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
@@ -78,19 +101,4 @@ if __name__ == "__main__":
 
     #RunModelBatchTest()
 
-    # bulk_time_test()
-    k = [4.2, 3.3, 2.9, 2.6, 2.4, 2.1, 2.0, 1.9, 1.7, 1.4, 1.2]
-    # k = [4.0, 3.0, 2.6, 2.2, 2.1, 1.9, 1.7, 1.6, 1.4, 1.2,1.0]
-    tmp = []
-    for i in range(len(k)):
-        if i == 0:
-            tmp.append(k[i] + (random.random() - 0.5) * 0.1)
-        else:
-            if (i > 5):
-                for j in range(5):
-                    tmp.append(k[i] + (random.random() - 0.5) * 0.05)
-            else:
-                for j in range(10):
-                    tmp.append(k[i] + (random.random() - 0.5) * 0.2)
-    plt.plot(tmp, linewidth=2)
-    plt.show()
+    RunDataStats()
