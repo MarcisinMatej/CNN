@@ -210,12 +210,12 @@ def prepare_eval_history(histories):
     att_cnt = len(histories[0])
     # first is aggragate loss, the rest is split half loss and the second half acc
     mat = np.asarray(histories)
-    history['Agg_loss'] = np.asarray(mat[:,0])
+    history['Agg_loss'] = np.asarray(mat[:, 0])
 
     for i in range(1, int(att_cnt/2) + 1):
-        history['loss' + str(i)] = mat[:,i]
-    for i in range(1, int(att_cnt/2) + 1):
-        history['acc' + str(i)] = mat[:,int(att_cnt/2) + i]
+        history['loss' + str(i)] = mat[:, i]
+    for i in range(int(att_cnt/2) + 1, att_cnt):
+        history['acc' + str(i)] = mat[:, + i]
     return history
 
 def save_model(model,path):

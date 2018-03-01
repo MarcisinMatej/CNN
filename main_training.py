@@ -38,6 +38,7 @@ def get_agg_loss(data):
     for key in data.keys():
         if 'loss' == key:
             agg = data[key][-1]
+            break
     return agg
 
 def validate_epoch(model, generator, epoch_id,ep_hist_val):
@@ -52,11 +53,13 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
     global BEST_LOSS
     hist_val = []
     val_gen = generator.generate_validation()
+    agg = 0
     for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
         hist_val.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
+        agg += get_agg_loss(hist_val[-1])
     plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
     # save model if we get better validation loss
-    agg = get_agg_loss(hist_val)
+
     if agg < BEST_LOSS:
         print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
         save_model(model, model_path+"best_")
