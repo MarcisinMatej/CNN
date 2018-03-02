@@ -2,7 +2,6 @@ from CNN import *
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
-from keras.preprocessing.image import ImageDataGenerator
 
 bulk_size = 10240
 model_path = 'models/'
@@ -89,7 +88,9 @@ def run_load_model():
     :return:
     """
     start_ep = 9
-    ep_hist_train,ep_hist_val, model = load_model(model_path)
+    ep_hist_train = {}
+    ep_hist_val = {}
+    model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])

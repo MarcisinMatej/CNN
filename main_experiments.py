@@ -17,7 +17,7 @@ import pandas as pd
 import scipy
 from collections import Counter
 
-from data_proc.DataLoader import load_label_txts
+from data_proc.DataLoader import load_label_txts, load_folder_txts
 
 bulk_size = 1024
 model_path = 'model/'
@@ -80,17 +80,33 @@ def RunModelBatchTest():
         # Training
         batch_time_test(model, generator)
 
-def count_freq(data):
-    return
+def count_freq(data,cnt):
+    for i in range(cnt):
+        x = data[:,i]
+        print(Counter(x))
 
 def RunDataStats():
     attr_vals, lbs_map = load_label_txts()
-    tmp = []
-    for arr in lbs_map.values():
-        tmp.append(arr)
-    mat = np.asarray(tmp)
-    x = mat[:,1]
-    print(Counter(x))
+    train = []
+    valid = []
+    test = []
+    for line in load_folder_txts():
+        key = line.split()[0].split("/")[-1]
+        val = line.split()[1]
+        if val == "1":
+            train.append(lbs_map[key])
+        elif val == "2":
+            test.append(lbs_map[key])
+        elif val == "3":
+            valid.append(lbs_map[key])
+
+    print("TRAIN")
+    count_freq(np.asarray(train),len(attr_vals))
+    print("VALIDATION")
+    count_freq(np.asarray(valid), len(attr_vals))
+    print("TEST")
+    count_freq(np.asarray(test), len(attr_vals))
+
 
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
@@ -102,3 +118,4 @@ if __name__ == "__main__":
     #RunModelBatchTest()
 
     RunDataStats()
+
