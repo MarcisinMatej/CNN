@@ -3,20 +3,13 @@ Varios test like speed test, data statistics etc...
 """
 
 import datetime
-import random
-
-from CNN import *
-from keras import optimizers
-from data_proc.DataGenerator import DataGenerator
-import plotly.plotly as py
-import plotly.graph_objs as go
-from plotly.tools import FigureFactory as FF
-
-import numpy as np
-import pandas as pd
-import scipy
 from collections import Counter
 
+import numpy as np
+from keras import optimizers
+
+from CNN import *
+from data_proc.DataGenerator import DataGenerator
 from data_proc.DataLoader import load_label_txts, load_folder_txts
 
 bulk_size = 1024

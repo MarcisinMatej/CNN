@@ -1,18 +1,11 @@
 from __future__ import print_function
-
-import matplotlib.pyplot as plt
 import numpy as np
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense
 from keras.layers import Input, Flatten
-
 from keras.models import Model, model_from_json
-from keras.utils import plot_model
-
 from data_proc.DataLoader import get_attributes_desc
 
-COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-figures_path = 'figures/'
 history_path = "histories/"
 
 def define_network(in_shape=(32, 32, 3)):
@@ -67,156 +60,6 @@ def define_network(in_shape=(32, 32, 3)):
     # _plot_model(model)
     return model
 
-
-def _plot_model(model):
-    """
-    Produces plot of model, see keras.plot_model
-    :param model:
-    :return: saves plot image
-    """
-    plot_model(model, to_file='model.png')
-
-
-def plot_loss(data, epoch_ind):
-    """
-    Plots loss curves from data dictionary.
-    :param data: dictionary in form, where each key has loss in its name
-     e.g. : 'string_loss':[list of integers]
-    :param epoch_ind: index of epoch
-    :return: saved plot as png file which name is starting by epoch_index
-    """
-    # Loss Curves
-    c = 0
-    plt.figure()
-    ax = plt.subplot(111)
-    for key in data.keys():
-        if 'loss' in key:
-            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
-            c = (c + 1) % len(COLORS)
-            # plt.plot(history.history['loss'], 'r', linewidth=3.0)
-            # plt.plot(history['loss'], 'r', linewidth=3.0)
-            # plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
-            # plt.plot(history['val_loss'], 'b', linewidth=3.0)
-
-    # Shrink current axis's height by 10% on the bottom
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                     box.width, box.height * 0.9])
-    ax.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, -0.05))
-    plt.xlabel('Chunks ', fontsize=16)
-    plt.ylabel('Loss', fontsize=16)
-    plt.title('Loss Curves', fontsize=16)
-    plt.savefig(figures_path + epoch_ind + "_loss")
-    plt.close('all')
-
-
-def plot_accuracy(data, epoch_ind):
-    """
-        Plots accuracy curves from data dictionary.
-        :param data: dictionary in form, where each key has 'acc' substring in its name
-         e.g. : 'string_acc':[list of integers]
-        :param epoch_ind: index of epoch
-        :return: saved plot as png file which name is starting by epoch_index
-        """
-    # Accuracy Curves
-    c = 0
-    plt.figure(figsize=[8, 6])
-    ax = plt.subplot(111)
-    for key in data.keys():
-        if 'acc' in key:
-            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
-            c = (c + 1) % len(COLORS)
-            # #plt.plot(history.history['acc'], 'r', linewidth=3.0)
-            # plt.plot(history['acc'], 'r', linewidth=3.0)
-            # #plt.plot(history.history['val_acc'], 'b', linewidth=3.0)
-            # plt.plot(history['val_acc'], 'b', linewidth=3.0)
-            # Shrink current axis's height by 10% on the bottom
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + box.height * 0.1,
-                     box.width, box.height * 0.9])
-    ax.legend(loc='upper center', ncol=4, bbox_to_anchor=(0.5, -0.05))
-    plt.xlabel('Chunks ', fontsize=16)
-    plt.ylabel('Accuracy', fontsize=16)
-    plt.title('Accuracy Curves', fontsize=16)
-    plt.savefig(figures_path + epoch_ind + '_acc')
-    plt.close('all')
-
-
-def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_flg=True):
-    """
-    Produces plot of loss and accuracy per epoch for validation and training data.
-    Values are taken from history.
-    :param history: history returned from merge_histories(), basically dictionary of loss/accuracy.
-    Contains values of metrics per bulk size
-    :param agg_history: average metrics per epoch
-    :param epoch_ind: index of epoch
-    :return:
-    """
-    if plot_flag:
-        # plot metrics in the last epoch
-        plot_loss(history, epoch_ind)
-        plot_accuracy(history, epoch_ind)
-        plt.close('all')
-    if agg:
-        # plot avegare metrics thorugh all epochs
-        agg_history = merge_epoch_history(agg_history,history)
-        plot_loss(agg_history, "aggregate")
-        plot_accuracy(agg_history, "aggregate")
-        plt.close('all')
-    if ser_flg:
-        serialize_history(history,epoch_ind)
-
-def merge_history(histories):
-    """
-    Helper method which merges multiple history files.
-    :param histories: array of histories ordered in order of merging (needed for epoch index update)
-    :return: single history dictionary
-    """
-    history = {}
-    if len(histories) <= 0:
-        return {}
-    for key in histories[0].history.keys():
-        history[key] = []
-
-    for h in histories:
-        for key in h.history.keys():
-            history[key] += h.history[key]
-
-    return history
-
-def merge_epoch_history(previous, current):
-    """
-    Helper method which merges multiple dictionaries to average value for epoch.
-    :param previous : old history dictionary per epoch
-    :param current : new data from the last epoch
-    :return: single history dictionary
-    """
-    if len(current.keys()) <= 0:
-        return previous
-    if len(previous.keys()) <= 0:
-        for key in current.keys():
-            previous[key] = []
-
-    for key in current.keys():
-        #average new
-        previous[key].append(sum(current[key]) / len(current[key]))
-    return previous
-
-def prepare_eval_history(histories):
-    history = {}
-    if len(histories) <= 0:
-        return history
-
-    att_cnt = len(histories[0])
-    # first is aggragate loss, the rest is split half loss and the second half acc
-    mat = np.asarray(histories)
-    history['Agg_loss'] = np.asarray(mat[:, 0])
-
-    for i in range(1, int(att_cnt/2) + 1):
-        history['loss' + str(i)] = mat[:, i]
-    for i in range(int(att_cnt/2) + 1, att_cnt):
-        history['acc' + str(i)] = mat[:, + i]
-    return history
 
 def save_model(model,path):
     """

@@ -3,13 +3,16 @@ from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 
+from main_plots import plot_history, merge_history, prepare_eval_history
+
 bulk_size = 10240
 model_path = 'models/'
 n_epochs = 100
-batch_size = 96
+batch_size = 124
 in_shape = (64, 64, 3)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
+learning_rate = 0.0000011
 
 
 def train_epoch(model, generator, ep_ind, ep_hist_train):
@@ -32,14 +35,6 @@ def train_epoch(model, generator, ep_ind, ep_hist_train):
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
-def get_agg_loss(data):
-    agg = 0
-    for key in data.keys():
-        if 'loss' == key:
-            agg = data[key][-1]
-            break
-    return agg
-
 def validate_epoch(model, generator, epoch_id,ep_hist_val):
     """
     Procedure to validate provided model with provide data from generator
@@ -55,7 +50,7 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
     agg = 0
     for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
         hist_val.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
-        agg += get_agg_loss(hist_val[-1])
+        agg += hist_val[-1][0]
     plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
     # save model if we get better validation loss
 
@@ -70,7 +65,7 @@ def run_model():
     :return:
     """
     model = define_network(in_shape=in_shape)
-    opt = optimizers.Adam(lr=0.0000015)
+    opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
@@ -91,7 +86,7 @@ def run_load_model():
     ep_hist_train = {}
     ep_hist_val = {}
     model = load_model(model_path)
-    opt = optimizers.Adam(lr=0.0000015)
+    opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     generator = DataGenerator((64, 64), bulk_size)
@@ -110,7 +105,7 @@ def run_model_virtual():
     :return:
     """
     model = define_network(in_shape=in_shape)
-    opt = optimizers.Adam(lr=0.0000015)
+    opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
@@ -138,9 +133,9 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # run_model()
+    run_model()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
-    run_load_model()
+    # run_load_model()

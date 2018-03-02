@@ -90,12 +90,21 @@ class DataGenerator(object):
             except Exception as e:
                 print(str(e))
                 i += self.chunk_size
+        #yiel the rest of images
+        if i < len(names):
+            try:
+                # b_i is index in batch
+                img_labels = self.labels_generator(names[i:len(names)])
+                images = self.get_transformed_images(names[i:len(names)], folder)
+                yield images, img_labels
+            except Exception as e:
+                print(str(e))
 
     def generate_training(self):
         return self.generate_data(self.train_ids,'train/')
 
     def generate_validation(self):
-        return self.generate_data(self.train_ids,'validation/')
+        return self.generate_data(self.validation_ids,'validation/')
 
     def generate_testing(self):
         return self.generate_data(self.test_ids,'test/')
