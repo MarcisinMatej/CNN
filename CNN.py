@@ -7,6 +7,7 @@ from keras.models import Model, model_from_json
 from data_proc.DataLoader import get_attributes_desc
 
 history_path = "histories/"
+config_path_var = "data_proc/config_files/training_vars.npy"
 
 def define_network(in_shape=(32, 32, 3)):
     """
@@ -61,7 +62,7 @@ def define_network(in_shape=(32, 32, 3)):
     return model
 
 
-def save_model(model,path):
+def save_model(model,path,ep_ind,best_loss):
     """
     Saves KERAS model to designated location. Model is saved
     as json_file and weights are separately in model.h5 file
@@ -73,6 +74,7 @@ def save_model(model,path):
         json_file.write(model.to_json())
     # serialize weights to HDF5
     model.save_weights(path + "model.h5")
+    save_vars(ep_ind,best_loss)
     print("Saved model to disk")
 
 def load_model(path):
@@ -80,7 +82,8 @@ def load_model(path):
     Loads KERAS model from designated location. Model is loaded
     from json_file and weights are separately loaded from model.h5 file.
     :param path: path to folder with 'model.json' file and 'model.h5' files.
-    :return: loaded model with weights
+    :return: loaded model with weights,dictionary of saved config variables (eg.epoch index, best validation loss)
+    For more see save_vars()
     """
     # load json and create model
     json_file = open(path+'model.json', 'r')
@@ -90,16 +93,39 @@ def load_model(path):
     # load weights into new model
     loaded_model.load_weights(path+"model.h5")
     print("Loaded model from disk")
-    return loaded_model
+    return loaded_model,load_dictionary(config_path_var)
 
 def serialize_history(dict,ep_ind):
+    """
+    Save history(dictionary) so disk.
+    :param dict:
+    :param ep_ind:
+    :return:
+    """
     # Save
     np.save(history_path + str(ep_ind) + "_hist.npy", dict)
 
 
-def load_history(path_loc):
+def load_dictionary(path_loc):
+    """
+    Loads dictionary from specified path.
+    :param path_loc:
+    :return:
+    """
     # Save
     return np.load(path_loc).item()
 
 
+def save_vars(ep_ind, best_loss):
+    """
+    Saves parameters of model run, like current epoch index...
+    Location is config files directory.
+    :param ep_ind: current epoch index
+    :param best_loss: currently the best validation loss
+    :return:
+    """
+    dict = {}
+    dict['epoch'] = ep_ind
+    dict['loss'] = best_loss
+    np.save(config_path_var, dict)
 

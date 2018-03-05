@@ -8,3 +8,4 @@ figures/*.png
 *.h5
 *.json
 *.npy
+figures/lr_*

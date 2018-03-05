@@ -1,8 +1,9 @@
 from keras import optimizers
 
-from CNN import load_model, plot_history, prepare_eval_history
+from CNN import load_model
 from data_proc.DataGenerator import DataGenerator
-from main_training import batch_size, model_path, bulk_size, figures_path
+from main_plots import figures_path, plot_history, prepare_eval_history
+from main_training import batch_size, model_path, bulk_size
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -84,7 +85,7 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    model = load_model(model_path)
+    model = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
     generator = DataGenerator((64, 64), bulk_size)

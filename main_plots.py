@@ -5,7 +5,7 @@ Helper functions for ploting results.
 import matplotlib.pyplot as plt
 from keras.utils import plot_model
 import numpy as np
-from CNN import serialize_history, load_history, history_path
+from CNN import serialize_history, load_dictionary, history_path
 import glob
 import re
 
@@ -185,12 +185,9 @@ def plot_agg_epoch():
     paths = sorted(glob.glob(history_path + "*.npy"), key = stringSplitByNumbers)
     for path in paths:
         if "train" in path:
-            print(path)
-            agg_hist_train = merge_epoch_history(agg_hist_train, load_history(path))
+            agg_hist_train = merge_epoch_history(agg_hist_train, load_dictionary(path))
         elif "validation" in path:
-            print(path)
-            print(load_history(path))
-            agg_hist_val = merge_epoch_history(agg_hist_val, load_history(path))
+            agg_hist_val = merge_epoch_history(agg_hist_val, load_dictionary(path))
             
     plot_loss(agg_hist_train,"Aggregate_train")
     plot_accuracy(agg_hist_train,"Aggregate_train")
@@ -200,8 +197,16 @@ def plot_agg_epoch():
 
 
 def plot_all_epoch_hist():
-    pass
-
+    paths = sorted(glob.glob(history_path + "*.npy"), key=stringSplitByNumbers)
+    i_t= 0
+    i_v=0
+    for path in paths:
+        if "train" in path:
+            plot_loss(load_dictionary(path), "train_" + str(i_t))
+            i_t+=1
+        elif "validation" in path:
+            plot_loss(load_dictionary(path), "val_" + str(i_v))
+            i_v+=1
 
 if __name__ == "__main__":
     plot_agg_epoch()

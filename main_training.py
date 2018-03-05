@@ -12,7 +12,7 @@ batch_size = 124
 in_shape = (64, 64, 3)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
-learning_rate = 0.0000011
+learning_rate = 0.0000013
 
 
 def train_epoch(model, generator, ep_ind, ep_hist_train):
@@ -82,10 +82,12 @@ def run_load_model():
     Loads model from saved location and runs it.
     :return:
     """
-    start_ep = 9
+    global BEST_LOSS
     ep_hist_train = {}
     ep_hist_val = {}
-    model = load_model(model_path)
+    model,vars_dict = load_model(model_path)
+    BEST_LOSS = vars_dict["loss"]
+    start_ep = vars_dict["epoch"]
     opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])

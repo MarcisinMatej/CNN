@@ -5,7 +5,6 @@ Varios test like speed test, data statistics etc...
 import datetime
 from collections import Counter
 
-import numpy as np
 from keras import optimizers
 
 from CNN import *
@@ -74,9 +73,19 @@ def RunModelBatchTest():
         batch_time_test(model, generator)
 
 def count_freq(data,cnt):
+    freq_dict = []
+    s = 0
     for i in range(cnt):
         x = data[:,i]
-        print(Counter(x))
+        freq_dict.append(Counter(x))
+        s = sum(freq_dict[-1].values())
+        for key in freq_dict[-1].keys():
+            # make percentage and round on two decimal places
+            freq_dict[-1][key] = format(freq_dict[-1][key]/s*100,'.2f')
+        print(freq_dict[-1])
+
+    print("Sum:" + str(s))
+    return freq_dict
 
 def RunDataStats():
     attr_vals, lbs_map = load_label_txts()
@@ -111,4 +120,3 @@ if __name__ == "__main__":
     #RunModelBatchTest()
 
     RunDataStats()
-
