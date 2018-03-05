@@ -31,7 +31,7 @@ def train_epoch(model, generator, ep_ind, ep_hist_train):
         # TODO here we can select just 1 attribute for training
         histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
 
-    save_model(model, model_path)
+    save_model(model, model_path,ep_ind,BEST_LOSS)
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
@@ -56,7 +56,7 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
 
     if agg < BEST_LOSS:
         print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
-        save_model(model, model_path+"best_")
+        save_model(model, model_path+"best_",epoch_id,BEST_LOSS)
         BEST_LOSS = agg
 
 def run_model():
@@ -122,7 +122,7 @@ def run_model_virtual():
             # TODO here we can select just 1 attribute for training
             histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
 
-        save_model(model, model_path)
+        save_model(model, model_path,e,BEST_LOSS)
         plot_history(merge_history(histories_train), ep_hist_train, str(e) + 'epoch_train')
         # Validing epoch
         validate_epoch(model, generator, e, ep_hist_val)
