@@ -1,5 +1,7 @@
 """
 Helper functions for ploting results.
+Disclaimer, those functions are highly specified for our use case,
+not recommended for general usage.
 """
 
 import matplotlib.pyplot as plt
@@ -9,8 +11,31 @@ from CNN import serialize_history, load_dictionary, history_path
 import glob
 import re
 
-COLORS = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+
+COLORS = {"Attract_acc":"g","Attract_loss":"g",
+                "Glass_acc":"r","Glass_loss":"r",
+                "Gender_acc":"c","Gender_loss":"c",
+                "Smile_acc":"m", "Smile_loss":"m",
+                "Hair_acc":"y","Hair_loss":"y",
+                "Agg_loss":"b"
+                }
+
+COlOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 figures_path = 'figures/'
+tmp_solution = {"out0_acc": "Attract_acc", "out0_loss": "Attract_loss",
+                "out1_acc": "Glass_acc", "out1_loss": "Glass_loss",
+                "out2_acc": "Gender_acc", "out2_loss": "Gender_loss",
+                "out3_acc": "Smile_acc", "out3_loss": "Smile_loss",
+                "out4_acc": "Hair_acc", "out4_loss": "Hair_loss",
+                "loss": "Agg_loss",
+                "acc6": "Attract_acc", "loss1": "Attract_loss",
+                "acc7": "Glass_acc", "loss2": "Glass_loss",
+                "acc8": "Gender_acc", "loss3": "Gender_loss",
+                "acc9": "Smile_acc", "loss4": "Smile_loss",
+                "acc10": "Hair_acc", "loss5": "Hair_loss",
+                "Agg_loss": "Agg_loss"
+                }
+
 
 def _plot_model(model):
     """
@@ -30,13 +55,11 @@ def plot_loss(data, epoch_ind):
     :return: saved plot as png file which name is starting by epoch_index
     """
     # Loss Curves
-    c = 0
     plt.figure()
     ax = plt.subplot(111)
     for key in data.keys():
         if 'loss' in key:
-            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
-            c = (c + 1) % len(COLORS)
+            ax.plot(data[key], COLORS[key], linewidth=3.0, label=key)
             # plt.plot(history.history['loss'], 'r', linewidth=3.0)
             # plt.plot(history['loss'], 'r', linewidth=3.0)
             # plt.plot(history.history['val_loss'], 'b', linewidth=3.0)
@@ -63,13 +86,11 @@ def plot_accuracy(data, epoch_ind):
         :return: saved plot as png file which name is starting by epoch_index
         """
     # Accuracy Curves
-    c = 0
     plt.figure(figsize=[8, 6])
     ax = plt.subplot(111)
     for key in data.keys():
         if 'acc' in key:
-            ax.plot(data[key], COLORS[c], linewidth=3.0, label=key)
-            c = (c + 1) % len(COLORS)
+            ax.plot(data[key], COLORS[key], linewidth=3.0, label=key)
             # #plt.plot(history.history['acc'], 'r', linewidth=3.0)
             # plt.plot(history['acc'], 'r', linewidth=3.0)
             # #plt.plot(history.history['val_acc'], 'b', linewidth=3.0)
@@ -169,7 +190,7 @@ def prepare_eval_history(histories):
     for i in range(1, int(att_cnt/2) + 1):
         history['loss' + str(i)] = mat[:, i]
     for i in range(int(att_cnt/2) + 1, att_cnt):
-        history['acc' + str(i)] = mat[:, + i]
+        history['acc' + str(i-att_cnt/2)] = mat[:, + i]
     return history
 
 
@@ -188,10 +209,12 @@ def plot_agg_epoch():
             agg_hist_train = merge_epoch_history(agg_hist_train, load_dictionary(path))
         elif "validation" in path:
             agg_hist_val = merge_epoch_history(agg_hist_val, load_dictionary(path))
-            
+
+    agg_hist_train = recode_category_names(agg_hist_train)
     plot_loss(agg_hist_train,"Aggregate_train")
     plot_accuracy(agg_hist_train,"Aggregate_train")
 
+    agg_hist_val = recode_category_names(agg_hist_val)
     plot_loss(agg_hist_val, "Aggregate_validation")
     plot_accuracy(agg_hist_val, "Aggregate_validation")
 
@@ -208,6 +231,39 @@ def plot_all_epoch_hist():
             plot_loss(load_dictionary(path), "val_" + str(i_v))
             i_v+=1
 
+def recode_category_names(mydict):
+    new_dict = {}
+    for old_key in mydict.keys():
+        new_key = tmp_solution[old_key]
+        new_dict[new_key] = mydict[old_key]
+    return new_dict
+
+
+
+def plot_matrix(matrix, att_ind, alpha):
+    """
+    :param matrix: confusion matrix in numbers
+    :param att_ind: index of category
+    :param alpha: names of category attributes
+    :return:
+    """
+    fig, ax = plt.subplots()
+    ax.matshow(matrix, cmap=plt.cm.Blues)
+    plt.xlabel("Predictions")
+    plt.ylabel("True labels")
+
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[0]):
+            c = int(matrix[j, i]/sum(matrix[j,:])*100)
+            ax.text(i, j, str(c)+"%", va='center', ha='center')
+            ax.set_xticklabels([''] + alpha)
+            ax.set_yticklabels([''] + alpha)
+
+    # plt.show()
+    plt.savefig(figures_path + "confusions/att_" + str(att_ind))
+    plt.close("all")
+
+
 if __name__ == "__main__":
     plot_agg_epoch()
-    plot_all_epoch_hist()
+    # plot_all_epoch_hist()

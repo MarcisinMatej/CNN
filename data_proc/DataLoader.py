@@ -39,10 +39,29 @@ def get_attributes_desc():
     atrs_desc = []
     with open(PATH + 'attribute_values.txt') as file_attr_vals:
         for line in file_attr_vals.readlines():
-            cnt = len(line.split(":")[1].split(","))
+            cnt = len(line.split(":")[-1].split(","))
             atrs_desc.append(cnt)
     return atrs_desc
 
+def get_category_names():
+    """
+    :return: list of names of categories
+    """
+    atrs_names = []
+    with open(PATH + 'attribute_values.txt') as file_attr_vals:
+        for line in file_attr_vals.readlines():
+            atrs_names.append(line.split(":")[0].split("-")[-1])
+    return atrs_names
+
+def get_cat_attributes_names():
+    """
+    :return: 2D array, in row we have attributes values
+    """
+    cat_atrs_names = []
+    with open(PATH + 'attribute_values.txt') as file_attr_vals:
+        for line in file_attr_vals.readlines():
+            cat_atrs_names.append(line.split(":")[-1].split(","))
+    return cat_atrs_names
 
 
 def flatten_image(image_path):

@@ -4,7 +4,7 @@ from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense
 from keras.layers import Input, Flatten
 from keras.models import Model, model_from_json
-from data_proc.DataLoader import get_attributes_desc
+from data_proc.DataLoader import get_attributes_desc, get_category_names
 
 history_path = "histories/"
 config_path_var = "data_proc/config_files/training_vars.npy"
@@ -50,8 +50,8 @@ def define_network(in_shape=(32, 32, 3)):
     # output_layers.append(out5)
 
     atrs_desc = get_attributes_desc()
-    for cnt, ind in zip(atrs_desc, range(len(atrs_desc))):
-        _name = "out"+str(ind)
+    cat_names = get_category_names()
+    for cnt, _name in zip(atrs_desc, cat_names):
         output_layers.append(Dense(cnt, activation='softmax', name=_name)(flatten))
     #TODO here we must also change to single output
     model = Model(inputs=input, outputs=output_layers)

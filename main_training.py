@@ -93,6 +93,7 @@ def run_load_model():
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     generator = DataGenerator((64, 64), bulk_size)
 
+    print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
         print("epoch %d" % e)
         # Training
