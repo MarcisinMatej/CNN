@@ -77,10 +77,13 @@ def save_model(model,path,ep_ind,best_loss):
     save_vars(ep_ind,best_loss)
     print("Saved model to disk")
 
+
+
 def load_model(path):
     """
     Loads KERAS model from designated location. Model is loaded
     from json_file and weights are separately loaded from model.h5 file.
+    Location of config dictionary is config files directory.
     :param path: path to folder with 'model.json' file and 'model.h5' files.
     :return: loaded model with weights,dictionary of saved config variables (eg.epoch index, best validation loss)
     For more see save_vars()
@@ -93,7 +96,7 @@ def load_model(path):
     # load weights into new model
     loaded_model.load_weights(path+"model.h5")
     print("Loaded model from disk")
-    return loaded_model,load_dictionary(config_path_var)
+    return loaded_model,load_config_dict(config_path_var)
 
 def serialize_history(dict,ep_ind):
     """
@@ -119,7 +122,6 @@ def load_dictionary(path_loc):
 def save_vars(ep_ind, best_loss):
     """
     Saves parameters of model run, like current epoch index...
-    Location is config files directory.
     :param ep_ind: current epoch index
     :param best_loss: currently the best validation loss
     :return:
@@ -129,3 +131,18 @@ def save_vars(ep_ind, best_loss):
     dict['loss'] = best_loss
     np.save(config_path_var, dict)
 
+
+def load_config_dict(config_path_var):
+    """
+    In case dictionary was
+    not serialized before the basic initial values are returned.
+    :param config_path_var:
+    :return:
+    """
+    try:
+        return load_dictionary(config_path_var)
+    except Exception as e:
+        var_dict = {}
+        var_dict['epoch'] = 0
+        var_dict['loss'] = float("inf")
+        return var_dict
