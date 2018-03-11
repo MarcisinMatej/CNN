@@ -91,8 +91,12 @@ class DataGenerator(object):
     def generate_data(self, names, folder):
         i = 0
         while (i + self.chunk_size) < len(names):
-            img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
-            images = self.get_transformed_images(names[i:i+self.chunk_size], folder)
+            images, errs= self.get_transformed_images(names[i:i+self.chunk_size], folder)
+            if len(errs) > 0:
+                print("ERROR reading images, removing error names from labels")
+                img_labels = self.get_encoded_labels([name for name in names[i:i+self.chunk_size] if name not in errs])
+            else:
+                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             i += self.chunk_size
             yield images, img_labels
 
@@ -123,6 +127,7 @@ class DataGenerator(object):
         :return: list of vstacked images, channel_last format
         """
         images = []
+        errs = []
         for img_name in img_names:
             try:
                 path = data_folder + folder + img_name
@@ -133,8 +138,9 @@ class DataGenerator(object):
                 images.append(x)
             except Exception as e:
                 print(str(e))
+                errs.append(img_name)
 
-        return np.vstack(images)
+        return np.vstack(images), errs
 
     def generate_data_labeled(self):
         """
