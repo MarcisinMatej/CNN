@@ -91,19 +91,27 @@ class DataGenerator(object):
     def generate_data(self, names, folder):
         i = 0
         while (i + self.chunk_size) < len(names):
-            images, errs= self.get_transformed_images(names[i:i+self.chunk_size], folder)
+            # img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+            images, errs = self.load_images(names[i:i + self.chunk_size], folder)
+            i += self.chunk_size
+            # remove error labels
             if len(errs) > 0:
-                print("ERROR reading images, removing error names from labels")
-                img_labels = self.get_encoded_labels([name for name in names[i:i+self.chunk_size] if name not in errs])
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels(
+                    [name for name in names[i:i + self.chunk_size] if name not in errs])
             else:
                 img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
-            i += self.chunk_size
             yield images, img_labels
 
-        #yield the rest of images
+        # yield the rest of images
         if i < len(names):
-            img_labels = self.get_encoded_labels(names[i:len(names)])
-            images = self.get_transformed_images(names[i:len(names)], folder)
+            images, errs = self.load_images(names[i:len(names)], folder)
+            if len(errs) > 0:
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels(
+                    [name for name in names[i:i + self.chunk_size] if name not in errs])
+            else:
+                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             yield images, img_labels
 
     def generate_training(self):
@@ -115,7 +123,7 @@ class DataGenerator(object):
     def generate_testing(self):
         return self.generate_data(self.test_ids,'test/')
 
-    def get_transformed_images(self,img_names,folder):
+    def load_images(self, img_names, folder):
         """
         Reads list of images from specidied folder.
         The images are resized to self.img_shape specified
@@ -150,14 +158,14 @@ class DataGenerator(object):
         folder = "train/"
         i = 0
         while (i + self.chunk_size) < len(self.train_ids):
-            images = self.get_transformed_images(self.train_ids[i:i+self.chunk_size], folder)
+            images, errs = self.load_images(self.train_ids[i:i + self.chunk_size], folder)
             i += self.chunk_size
             yield images, self.train_ids[i:i+self.chunk_size]
 
         # yield the rest of images
         if i < len(self.train_ids):
             img_labels = self.get_encoded_labels(self.train_ids[i:len(self.train_ids)])
-            images = self.get_transformed_images(self.train_ids[i:len(self.train_ids)], folder)
+            images, errs = self.load_images(self.train_ids[i:len(self.train_ids)], folder)
             yield images, img_labels
 
 # for debug purposes

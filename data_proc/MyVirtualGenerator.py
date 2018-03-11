@@ -111,8 +111,13 @@ class MyVirtualGenerator(object):
 
             #yield the rest of images
             if i < len(names):
-                img_labels = self.get_encoded_labels(names[i:len(names)])
-                images = self.get_transformed_images(names[i:len(names)])
+                images, errs = self.get_transformed_images(names[i:len(names)])
+                if len(errs) > 0:
+                    print("ERROR reading images, removing name from labels")
+                    img_labels = self.get_encoded_labels(
+                        [name for name in names[i:i + self.chunk_size] if name not in errs])
+                else:
+                    img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
                 yield images, img_labels
 
     def generate_data_eval(self, names, folder):
@@ -131,8 +136,12 @@ class MyVirtualGenerator(object):
 
         #yield the rest of images
         if i < len(names):
-            img_labels = self.get_encoded_labels(names[i:len(names)])
-            images = self.load_images(names[i:len(names)], folder)
+            images, errs = self.load_images(names[i:len(names)], folder)
+            if len(errs) > 0:
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels([name for name in names[i:i+self.chunk_size] if name not in errs])
+            else:
+                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             yield images, img_labels
 
     def generate_training(self):
