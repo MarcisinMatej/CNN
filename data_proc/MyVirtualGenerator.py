@@ -2,6 +2,8 @@ from keras.utils import np_utils
 
 from CNN import load_dictionary
 from keras.preprocessing import image
+
+from data_proc.DataGenerator import data_folder
 from data_proc.DataLoader import  load_folder_txts, load_attr_vals_txts
 import numpy as np
 from keras.preprocessing.image import ImageDataGenerator
@@ -98,8 +100,12 @@ class MyVirtualGenerator(object):
             print("-->Virtual run [", str(v_ep), "]")
             i = 0
             while (i + self.chunk_size) < len(names):
-                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
-                images = self.get_transformed_images(names[i:i+self.chunk_size])
+                # img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+                images, errs = self.get_transformed_images(names[i:i+self.chunk_size])
+                if len(errs) > 0:
+                    img_labels = self.get_encoded_labels([name for name in names[i:i + self.chunk_size] if name not in errs])
+                else:
+                    img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
                 i += self.chunk_size
                 yield images, img_labels
 
@@ -109,14 +115,61 @@ class MyVirtualGenerator(object):
                 images = self.get_transformed_images(names[i:len(names)])
                 yield images, img_labels
 
+    def generate_data_eval(self, names, folder):
+        i = 0
+        while (i + self.chunk_size) < len(names):
+            # img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+            images, errs = self.load_images(names[i:i+self.chunk_size], folder)
+            i += self.chunk_size
+            # remove error labels
+            if len(errs) > 0:
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels([name for name in names[i:i+self.chunk_size] if name not in errs])
+            else:
+                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+            yield images, img_labels
+
+        #yield the rest of images
+        if i < len(names):
+            img_labels = self.get_encoded_labels(names[i:len(names)])
+            images = self.load_images(names[i:len(names)], folder)
+            yield images, img_labels
+
     def generate_training(self):
         return self.generate_data(self.train_ids)
 
     def generate_validation(self):
-        return self.generate_data(self.validation_ids)
+        return self.generate_data_eval(self.validation_ids,'validation/')
 
     def generate_testing(self):
-        return self.generate_data(self.test_ids)
+        return self.generate_data_eval(self.test_ids,'test/')
+
+    def load_images(self,img_names,folder):
+        """
+        Reads list of images from specidied folder.
+        The images are resized to self.img_shape specified
+        in the generator contructor.
+        In case of error, image is not added to return list
+        and error is just printed.
+        :param img_names: List of image names
+        :param folder: Source folder
+        :return: list of vstacked images, channel_last format
+        """
+        images = []
+        errs = []
+        for img_name in img_names:
+            try:
+                path = data_folder + folder + img_name
+                # print(path)
+                img = image.load_img(path, target_size=self.img_shape)
+                x = image.img_to_array(img)
+                x = np.expand_dims(x, axis=0)
+                images.append(x)
+            except Exception as e:
+                print(str(e))
+                errs.append(img_name)
+
+        return np.vstack(images),errs
 
     def get_transformed_images(self, img_names):
         """
@@ -129,6 +182,7 @@ class MyVirtualGenerator(object):
         :return: list of vstacked images, channel_last format
         """
         images = []
+        errs = []
         for img_name in img_names:
             try:
                 path = IMAGES_FOLDER + img_name
@@ -142,8 +196,9 @@ class MyVirtualGenerator(object):
                 images.append(x)
             except Exception as e:
                 print(str(e))
+                errs.append(img_name)
 
-        return np.vstack(images)
+        return np.vstack(images), errs
 
     def generate_data_labeled(self):
         """
