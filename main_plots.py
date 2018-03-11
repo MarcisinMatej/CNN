@@ -10,7 +10,9 @@ import numpy as np
 from CNN import serialize_history, load_dictionary, history_path
 import glob
 import re
+import math
 
+from data_proc.DataLoader import get_cat_attributes_names, get_category_names
 
 COLORS = {"Attract_acc":"g","Attract_loss":"g",
                 "Glass_acc":"r","Glass_loss":"r",
@@ -22,17 +24,17 @@ COLORS = {"Attract_acc":"g","Attract_loss":"g",
 
 COlOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
 figures_path = 'figures/'
-tmp_solution = {"out0_acc": "Attract_acc", "out0_loss": "Attract_loss",
-                "out1_acc": "Glass_acc", "out1_loss": "Glass_loss",
-                "out2_acc": "Gender_acc", "out2_loss": "Gender_loss",
-                "out3_acc": "Smile_acc", "out3_loss": "Smile_loss",
-                "out4_acc": "Hair_acc", "out4_loss": "Hair_loss",
+tmp_solution = {"1_acc": "Attract_acc", "1_loss": "Attract_loss",
+                "2_acc": "Glass_acc", "2_loss": "Glass_loss",
+                "3_acc": "Gender_acc", "3_loss": "Gender_loss",
+                "4_acc": "Smile_acc", "4_loss": "Smile_loss",
+                "5_acc": "Hair_acc", "5_loss": "Hair_loss",
                 "loss": "Agg_loss",
-                "acc6": "Attract_acc", "loss1": "Attract_loss",
-                "acc7": "Glass_acc", "loss2": "Glass_loss",
-                "acc8": "Gender_acc", "loss3": "Gender_loss",
-                "acc9": "Smile_acc", "loss4": "Smile_loss",
-                "acc10": "Hair_acc", "loss5": "Hair_loss",
+                "acc0": "Attract_acc", "loss1": "Attract_loss",
+                "acc1": "Glass_acc", "loss2": "Glass_loss",
+                "acc2": "Gender_acc", "loss3": "Gender_loss",
+                "acc3": "Smile_acc", "loss4": "Smile_loss",
+                "acc4": "Hair_acc", "loss5": "Hair_loss",
                 "Agg_loss": "Agg_loss"
                 }
 
@@ -190,7 +192,7 @@ def prepare_eval_history(histories):
     for i in range(1, int(att_cnt/2) + 1):
         history['loss' + str(i)] = mat[:, i]
     for i in range(int(att_cnt/2) + 1, att_cnt):
-        history['acc' + str(i-att_cnt/2)] = mat[:, + i]
+        history['acc' + str(math.trunc(i-att_cnt/2))] = mat[:, + i]
     return history
 
 
@@ -233,6 +235,7 @@ def plot_all_epoch_hist():
 
 def recode_category_names(mydict):
     new_dict = {}
+    print(mydict.keys())
     for old_key in mydict.keys():
         new_key = tmp_solution[old_key]
         new_dict[new_key] = mydict[old_key]
@@ -243,7 +246,7 @@ def recode_category_names(mydict):
 def plot_matrix(matrix, att_ind, alpha):
     """
     :param matrix: confusion matrix in numbers
-    :param att_ind: index of category
+    :param att_ind: name of category
     :param alpha: names of category attributes
     :return:
     """
@@ -260,10 +263,26 @@ def plot_matrix(matrix, att_ind, alpha):
             ax.set_yticklabels([''] + alpha)
 
     # plt.show()
-    plt.savefig(figures_path + "confusions/att_" + str(att_ind))
+    plt.savefig(figures_path + "confusions/" + str(att_ind))
     plt.close("all")
+
+def convert_to_percentage_mat(matrix):
+    for row_i in range(len(matrix)):
+        row_sum = sum(matrix[row_i])
+        for col_i in range(len(matrix[row_i])):
+            matrix[row_i][col_i] = matrix[row_i][col_i]/row_sum
+    return matrix
+
+def plot_diff_matrices(matrices,split_name):
+    names = get_cat_attributes_names()
+    categories = get_category_names()
+    for matrix,alpha,cat in zip(matrices,names,categories):
+        plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
 
 
 if __name__ == "__main__":
     plot_agg_epoch()
     # plot_all_epoch_hist()
+    # d_d = load_dictionary("diff_dict.npy")
+    # print(d_d['val'][-1])
+    # plot_diff_matrices(d_d['test'], "test")

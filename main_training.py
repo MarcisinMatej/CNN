@@ -3,16 +3,19 @@ from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 
+from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
 bulk_size = 10240
 model_path = 'models/'
 n_epochs = 100
 batch_size = 124
-in_shape = (64, 64, 3)
+in_shape = (100, 100, 3)
+resolution = (100, 100)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
-learning_rate = 0.0000013
+BEST_EPOCH_IND = 0
+learning_rate = 0.0000007
 
 
 def train_epoch(model, generator, ep_ind, ep_hist_train):
@@ -31,7 +34,7 @@ def train_epoch(model, generator, ep_ind, ep_hist_train):
         # TODO here we can select just 1 attribute for training
         histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
 
-    save_model(model, model_path,ep_ind,BEST_LOSS)
+    save_model(model, model_path,ep_ind,BEST_LOSS,BEST_EPOCH_IND)
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
@@ -44,7 +47,7 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
     :param epoch_id:
     :return:
     """
-    global BEST_LOSS
+    global BEST_LOSS,BEST_EPOCH_IND
     hist_val = []
     val_gen = generator.generate_validation()
     agg = 0
@@ -56,8 +59,9 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
 
     if agg < BEST_LOSS:
         print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
-        save_model(model, model_path+"best_",epoch_id,BEST_LOSS)
+        save_model(model, model_path+"best_",epoch_id,BEST_LOSS,BEST_EPOCH_IND)
         BEST_LOSS = agg
+        BEST_EPOCH_IND = epoch_id
 
 def run_model():
     """
@@ -69,7 +73,7 @@ def run_model():
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
-    generator = DataGenerator((64, 64), bulk_size)
+    generator = DataGenerator(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
@@ -82,16 +86,17 @@ def run_load_model():
     Loads model from saved location and runs it.
     :return:
     """
-    global BEST_LOSS
+    global BEST_LOSS,BEST_EPOCH_IND
     ep_hist_train = {}
     ep_hist_val = {}
     model,vars_dict = load_model(model_path)
     BEST_LOSS = vars_dict["loss"]
+    BEST_EPOCH_IND = vars_dict["ep_ind"]
     start_ep = vars_dict["epoch"]
     opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGenerator((64, 64), bulk_size)
+    generator = DataGenerator(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
@@ -104,27 +109,19 @@ def run_load_model():
 
 def run_model_virtual():
     """
-    Model is freshly created and run with additional virtual examples.
+    Prepares fresh new model and network and runs it
+    with virtual image generator.
     :return:
     """
     model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
-    model.compile(optimizer=opt, loss="categorical_crossentropy", loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
+    model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
-    generator = DataGenerator((64, 64), bulk_size)
+    generator = MyVirtualGenerator(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
-        histories_train = []
-        train_gen = generator.virtual_train_generator()
-
-        # training
-        for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
-            # TODO here we can select just 1 attribute for training
-            histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
-
-        save_model(model, model_path,e,BEST_LOSS)
-        plot_history(merge_history(histories_train), ep_hist_train, str(e) + 'epoch_train')
+        train_epoch(model, generator, e, ep_hist_train)
         # Validing epoch
         validate_epoch(model, generator, e, ep_hist_val)
 
@@ -136,8 +133,8 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_model()
-    # run_model_virtual()
+    # run_model()
+    run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))

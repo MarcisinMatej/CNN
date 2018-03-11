@@ -11,6 +11,11 @@ def load_folder_txts():
     return folder
 
 
+def load_attr_vals_txts():
+    with open(PATH+'attribute_values.txt') as file_attr_vals:
+        return file_attr_vals.readlines()
+
+
 def load_label_txts():
     with open(PATH+'attribute_values.txt') as file_attr_vals:
         attr_vals = file_attr_vals.readlines()

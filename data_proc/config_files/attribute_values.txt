@@ -1,5 +1,5 @@
-1-Attractiveness: "attractive", "unattractive"
-2-Glasses: "glasses", "no glasses"
-3-Gender: "male", "female"
-4-Smile: "smiling", "not smiling"
-5-Hair: "black hair", "blond hair", "brown hair", "gray hair", "other"
+1-Attractiveness: attractive, unattractive
+2-Glasses: glasses, no glasses
+3-Gender: male, female
+4-Smile: smiling, not smiling
+5-Hair: black hair, blond hair, brown hair, gray hair, other

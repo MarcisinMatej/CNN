@@ -1,10 +1,10 @@
 from keras import optimizers
 
-from CNN import load_model
+from CNN import load_model, save_dictionary
 from data_proc.DataGenerator import DataGenerator
 from data_proc.DataLoader import get_cat_attributes_names
 from main_plots import plot_history, prepare_eval_history, plot_matrix
-from main_training import batch_size, model_path, bulk_size
+from main_training import batch_size, model_path, bulk_size, resolution
 import numpy as np
 import tensorflow as tf
 
@@ -12,6 +12,7 @@ import tensorflow as tf
 def eval_model(model, generator):
     predictions = []
     labels = []
+    print("Wut?")
     for X_data, Y_data in generator:  # these are chunks of ~bulk pictures
         predictions = model.predict(X_data, batch_size=batch_size)
         labels = Y_data
@@ -19,6 +20,7 @@ def eval_model(model, generator):
 
     for X_data, Y_data in generator:  # these are chunks of ~bulk pictures
         res = model.predict(X_data, batch_size=batch_size)
+        print("pls")
         #todo make dynamic
         for i in range(5):
             predictions[i] = np.concatenate((predictions[i], res[i]), axis=0)
@@ -42,21 +44,22 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
     if plot_flg:
         for i in range(att_cnt):
             plot_matrix(matrices[i],str(i)+"_"+sub_set+"_",get_cat_attributes_names())
+    return matrices
 
 
 def run_difusion_matrix_validation(model, generator):
+    print("Eval")
     preds, labs = eval_model(model, generator.generate_validation())
-    generate_dif_mat(preds,labs,True,"val")
-
+    return generate_dif_mat(preds,labs,False,"val")
 
 def run_difusion_matrix_train(model, generator):
     preds, labs = eval_model(model, generator.generate_training())
-    generate_dif_mat(preds, labs,True,"train")
+    return generate_dif_mat(preds, labs,False,"train")
 
 
 def run_difusion_matrix_test(model, generator):
     preds, labs = eval_model(model, generator.generate_testing())
-    generate_dif_mat(preds, labs,True,"tst")
+    return generate_dif_mat(preds, labs,False,"tst")
 
 
 def test_model(model, generator):
@@ -64,7 +67,7 @@ def test_model(model, generator):
     tst_gen = generator.generate_testing()
     for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
         hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
-    plot_history(prepare_eval_history(hist_tst), {}, 'testing', agg=False)
+    plot_history(prepare_eval_history(hist_tst), {}, 'Eval_testing', plot_flag=False,ser_flg=True,agg=False)
 
 
 if __name__ == "__main__":
@@ -77,9 +80,11 @@ if __name__ == "__main__":
     model, dict_vars = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGenerator((64, 64), bulk_size)
+    generator = DataGenerator(resolution, bulk_size)
 
-    run_difusion_matrix_validation(model, generator)
-    run_difusion_matrix_train(model, generator)
-    run_difusion_matrix_test(model, generator)
+    matrices_dict = {}
+    matrices_dict['val'] = run_difusion_matrix_validation(model, generator)
+    matrices_dict['train'] = run_difusion_matrix_train(model, generator)
+    matrices_dict['test'] = run_difusion_matrix_test(model, generator)
+    save_dictionary(path_loc="diff_dict", dict=matrices_dict)
     test_model(model, generator)

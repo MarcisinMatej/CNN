@@ -9,7 +9,7 @@ from keras import optimizers
 
 from CNN import *
 from data_proc.DataGenerator import DataGenerator
-from data_proc.DataLoader import load_label_txts, load_folder_txts
+from data_proc.DataLoader import load_label_txts, load_folder_txts, get_cat_attributes_names
 
 bulk_size = 1024
 model_path = 'model/'
@@ -85,7 +85,23 @@ def count_freq(data,cnt):
         print(freq_dict[-1])
 
     print("Sum:" + str(s))
+    count_gender_attractivenes(data)
     return freq_dict
+
+def count_gender_attractivenes(data):
+    att_cnt = len(data[data[:, 0] == '1'])
+    att_men_cnt = len( data[(data[:, 0] == '1') & (data[:, 2] == '1') ] )
+    att_fem_cnt = len(data[(data[:, 0] == '1') & (data[:, 2] == '2')])
+    un_cnt = len(data) - att_cnt
+    un_men_cnt = len(data[(data[:, 0] == '2') & (data[:, 2] == '1')])
+    un_fem_cnt = len(data[(data[:, 0] == '2') & (data[:, 2] == '2')])
+    print("Attractive people: ",att_cnt)
+    print("Attractive male: ", att_men_cnt/att_cnt*100 )
+    print("Attractive female: ", att_fem_cnt / att_cnt * 100)
+    print("Untractive people: ", un_cnt)
+    print("Unttractive male: ", un_men_cnt / un_cnt * 100)
+    print("Unttractive female: ", un_fem_cnt / un_cnt * 100)
+
 
 def RunDataStats():
     attr_vals, lbs_map = load_label_txts()
@@ -110,6 +126,36 @@ def RunDataStats():
     count_freq(np.asarray(test), len(attr_vals))
 
 
+def convert_to_percentage_mat(matrix):
+    for row_i in range(len(matrix)):
+        row_sum = sum(matrix[row_i])
+        for col_i in range(len(matrix[row_i])):
+            matrix[row_i][col_i] = matrix[row_i][col_i]/row_sum
+    return matrix
+
+
+def print_errs(matrix, alpha):
+
+    for i,name in zip(range(len(matrix)),alpha):
+        print(name,": ",str(int(100*(1-matrix[i][i]))))
+
+
+def run_err_stats():
+    """
+    Computes error rate in percentage per category.
+    Requires diff_dict.npy to load data.
+    :return:
+    """
+    d_d = load_dictionary("diff_dict.npy")
+    alphas = get_cat_attributes_names()
+    categories = get_category_names()
+    for key in d_d.keys():
+        print("----- ", key, "-------")
+        for matrix, alpha in zip(d_d[key], alphas):
+            print_errs(convert_to_percentage_mat(matrix), alpha)
+
+
+
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
     # this can result in OOM error later
@@ -119,4 +165,5 @@ if __name__ == "__main__":
 
     #RunModelBatchTest()
 
-    RunDataStats()
+    # RunDataStats()
+    run_err_stats()

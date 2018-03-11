@@ -20,21 +20,22 @@ def define_network(in_shape=(32, 32, 3)):
     :return: keras model
     """
 
+    channel = "channels_last"
     #define shape of input
     input = Input(shape=in_shape,name="input")
 
     # define layers relationships
-    conv1 = Conv2D(32, (3, 3), padding='same',activation='relu')(input)
-    conv2 = Conv2D(32, (3, 3), padding='same',activation='relu')(conv1)
-    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format="channels_first")(conv2)
-    conv3 = Conv2D(64, (3, 3), padding='same',activation='relu')(maxp1)
-    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format="channels_first")(conv3)
-    conv4 = Conv2D(64, (3, 3), padding='same',activation='relu')(maxp2)
-    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format="channels_first")(conv4)
-    conv5 = Conv2D(128, (3, 3), padding='same',activation='relu')(maxp3)
-    conv6 = Conv2D(128, (4, 4), padding='same',activation='relu')(conv5)
-    conv7 = Conv2D(2048, (5, 5), padding='same',activation='relu')(conv6)
-    conv8 = Conv2D(2048, (1, 1), padding='same',activation='relu')(conv7)
+    conv1 = Conv2D(32, (3, 3), padding='valid',activation='relu')(input)
+    conv2 = Conv2D(32, (3, 3), padding='valid',activation='relu')(conv1)
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv2)
+    conv3 = Conv2D(64, (3, 3), padding='valid',activation='relu')(maxp1)
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv3)
+    conv4 = Conv2D(64, (3, 3), padding='valid',activation='relu')(maxp2)
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv4)
+    conv5 = Conv2D(128, (3, 3), padding='valid',activation='relu')(maxp3)
+    conv6 = Conv2D(128, (4, 4), padding='valid',activation='relu')(conv5)
+    conv7 = Conv2D(2048, (5, 5), padding='valid',activation='relu')(conv6)
+    conv8 = Conv2D(2048, (1, 1), padding='valid',activation='relu')(conv7)
     flatten = Flatten()(conv8)
     output_layers = []
     # output layers
@@ -62,7 +63,7 @@ def define_network(in_shape=(32, 32, 3)):
     return model
 
 
-def save_model(model,path,ep_ind,best_loss):
+def save_model(model,path,ep_ind,best_loss,best_ep_ind):
     """
     Saves KERAS model to designated location. Model is saved
     as json_file and weights are separately in model.h5 file
@@ -74,7 +75,7 @@ def save_model(model,path,ep_ind,best_loss):
         json_file.write(model.to_json())
     # serialize weights to HDF5
     model.save_weights(path + "model.h5")
-    save_vars(ep_ind,best_loss)
+    save_vars(ep_ind,best_loss,best_ep_ind)
     print("Saved model to disk")
 
 
@@ -98,15 +99,16 @@ def load_model(path):
     print("Loaded model from disk")
     return loaded_model,load_config_dict(config_path_var)
 
+
 def serialize_history(dict,ep_ind):
     """
-    Save history(dictionary) so disk.
+    Save history(dictionary) to disk.
     :param dict:
     :param ep_ind:
     :return:
     """
     # Save
-    np.save(history_path + str(ep_ind) + "_hist.npy", dict)
+    save_dictionary(history_path + str(ep_ind) + "_hist", dict)
 
 
 def load_dictionary(path_loc):
@@ -119,9 +121,21 @@ def load_dictionary(path_loc):
     return np.load(path_loc).item()
 
 
-def save_vars(ep_ind, best_loss):
+def save_dictionary(path_loc, dict):
+    """
+    Saves dictionary to specified path into npy file.
+    :param dict:
+    :param path_loc:
+    :return:
+    """
+    # Save
+    np.save(path_loc + ".npy", dict)
+
+
+def save_vars(ep_ind, best_loss,best_ep_ind):
     """
     Saves parameters of model run, like current epoch index...
+    :param best_ep_ind: index of epoch with the best val. loss
     :param ep_ind: current epoch index
     :param best_loss: currently the best validation loss
     :return:
@@ -129,6 +143,7 @@ def save_vars(ep_ind, best_loss):
     dict = {}
     dict['epoch'] = ep_ind
     dict['loss'] = best_loss
+    dict['ep_ind'] = best_ep_ind
     np.save(config_path_var, dict)
 
 
@@ -145,4 +160,5 @@ def load_config_dict(config_path_var):
         var_dict = {}
         var_dict['epoch'] = 0
         var_dict['loss'] = float("inf")
+        var_dict['ep_ind'] = 0
         return var_dict

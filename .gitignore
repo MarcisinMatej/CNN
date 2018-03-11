@@ -9,3 +9,5 @@ figures/*.png
 *.json
 *.npy
 figures/lr_*
+confusions/test_*.png
+*/confusions/test_*.png

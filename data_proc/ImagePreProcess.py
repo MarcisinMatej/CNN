@@ -1,6 +1,20 @@
+from CNN import save_dictionary
 from data_proc import ImageParser
+from data_proc.DataGenerator import DataGenerator
+import numpy as np
 
-PATH = 'config_files/'
+PATH = 'data_proc/config_files/'
+# PATH = 'config_files/'
+
+
+def load_crop_boxes():
+    m_dict = {}
+    with open(PATH+'bboxes.txt') as file_bboxes:
+        bboxes = file_bboxes.readlines()
+    for bbox in bboxes:
+        arr = bbox.split()
+        m_dict[arr[0].split("/")[-1]] = (float(arr[1]), float(arr[2]), float(arr[5]), float(arr[6]))
+    return m_dict
 
 
 def load_crop_txts():
@@ -44,5 +58,22 @@ def run_data_crop(size):
     # CelebA/img_align_celeba/000001.jpg 45 76 148 76 148 179 45 179
 
 
+def my_stack(codes):
+    to_ret = []
+    for i in range(len(codes[0])):
+        to_ret.append([codes[j][i] for j in range(5)])
+    return to_ret
+
+def prepare_encoded_labels():
+    generator = DataGenerator()
+    my_dict = {}
+    names, codes = generator.generate_all_encoded_labels()
+    for name, encoded in zip(names,my_stack(codes)):  # these are chunks of ~bulk pictures
+        # print(name,encoded,".")
+        my_dict[name] = encoded
+
+    save_dictionary("encoded_labels", my_dict)
+
 if __name__ == "__main__":
-    run_data_crop((64, 64))
+    # run_data_crop((64, 64))
+    prepare_encoded_labels()
