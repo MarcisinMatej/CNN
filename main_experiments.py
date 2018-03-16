@@ -127,10 +127,10 @@ def RunDataStats():
 
 
 def convert_to_percentage_mat(matrix):
+    m_sum = sum(matrix)
     for row_i in range(len(matrix)):
-        row_sum = sum(matrix[row_i])
         for col_i in range(len(matrix[row_i])):
-            matrix[row_i][col_i] = matrix[row_i][col_i]/row_sum
+            matrix[row_i][col_i] = matrix[row_i][col_i]/m_sum
     return matrix
 
 
@@ -148,7 +148,6 @@ def run_err_stats():
     """
     d_d = load_dictionary("diff_dict.npy")
     alphas = get_cat_attributes_names()
-    categories = get_category_names()
     for key in d_d.keys():
         print("----- ", key, "-------")
         for matrix, alpha in zip(d_d[key], alphas):

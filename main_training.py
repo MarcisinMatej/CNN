@@ -81,6 +81,16 @@ def run_model():
         validate_epoch(model, generator, e, ep_hist_val)
 
 
+def load_network():
+    global BEST_LOSS, BEST_EPOCH_IND
+    model, vars_dict = load_model(model_path)
+    print(vars_dict)
+    BEST_LOSS = vars_dict["loss"]
+    BEST_EPOCH_IND = vars_dict["ep_ind"]
+    start_ep = vars_dict["epoch"]
+    return model,start_ep
+
+
 def run_load_model():
     """
     Loads model from saved location and runs it.
@@ -90,6 +100,7 @@ def run_load_model():
     ep_hist_train = {}
     ep_hist_val = {}
     model,vars_dict = load_model(model_path)
+    print(vars_dict)
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     start_ep = vars_dict["epoch"]
@@ -100,6 +111,45 @@ def run_load_model():
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
+        print("epoch %d" % e)
+        # Training
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validating
+        validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_load_model_virtual():
+    """
+    Loads model from saved location and runs it.
+    :return:
+    """
+    global BEST_LOSS, BEST_EPOCH_IND
+    ep_hist_train = {}
+    ep_hist_val = {}
+    model,vars_dict = load_model(model_path)
+    print(vars_dict)
+    BEST_LOSS = vars_dict["loss"]
+    BEST_EPOCH_IND = vars_dict["ep_ind"]
+    start_ep = vars_dict["epoch"]
+    opt = optimizers.Adam(lr=learning_rate)
+    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    generator = MyVirtualGenerator(resolution, bulk_size)
+
+    print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
+    for e in range(start_ep,n_epochs):
+        print("epoch %d" % e)
+        # Training
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validating
+        validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_network(model, optim, generator, start_ep):
+    model.compile(optimizer=optim, loss="categorical_crossentropy", metrics=['accuracy'])
+    ep_hist_train = {}
+    ep_hist_val = {}
+    print("Starting loaded model at epoch[", str(start_ep), "]", " with best loss: ", str(BEST_LOSS))
+    for e in range(start_ep, n_epochs):
         print("epoch %d" % e)
         # Training
         train_epoch(model, generator, e, ep_hist_train)
@@ -133,9 +183,10 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # run_model()
-    run_model_virtual()
+    run_model()
+    # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
     # run_load_model()
+    # run_load_model_virtual()
