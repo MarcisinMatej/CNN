@@ -90,45 +90,50 @@ class MyVirtualGenerator(object):
         # 1024
         return [np.array(tmp_arr) for tmp_arr in zip(*to_return)]
 
-    def generate_data(self, names,eval):
-        i = 0
-        while (i + self.chunk_size) < len(names):
-            if eval():
-                images, errs = self.get_original_images(names[i:i + self.chunk_size])
-            else:
-                images, errs = self.get_transformed_images(names[i:i + self.chunk_size])
-            if len(errs) > 0:
-                img_labels = self.get_encoded_labels(
-                    [name for name in names[i:i + self.chunk_size] if name not in errs])
-            else:
-                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
-            i += self.chunk_size
-            yield images, img_labels
+    def generate_data(self, names, evaluation):
+        runs = 0
+        if evaluation:
+            runs = 1
+        else:
+            runs = self.virt_dupl
+        for v_ep in range(runs):
+            print("-->Virtual run [", str(v_ep), "]")
+            i = 0
+            while (i + self.chunk_size) < len(names):
+                if evaluation:
+                    images, errs = self.get_original_images(names[i:i + self.chunk_size])
+                else:
+                    images, errs = self.get_transformed_images(names[i:i + self.chunk_size])
+                if len(errs) > 0:
+                    img_labels = self.get_encoded_labels(
+                        [name for name in names[i:i + self.chunk_size] if name not in errs])
+                else:
+                    img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+                i += self.chunk_size
+                yield images, img_labels
 
-        # yield the rest of images
-        if i < len(names):
-            if eval():
-                images, errs = self.get_original_images(names[i:len(names)])
-            else:
-                images, errs = self.get_transformed_images(names[i:len(names)])
-            if len(errs) > 0:
-                print("ERROR reading images, removing name from labels")
-                img_labels = self.get_encoded_labels(
-                    [name for name in names[i:i + self.chunk_size] if name not in errs])
-            else:
-                img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
-            yield images, img_labels
+            # yield the rest of images
+            if i < len(names):
+                if evaluation:
+                    images, errs = self.get_original_images(names[i:len(names)])
+                else:
+                    images, errs = self.get_transformed_images(names[i:len(names)])
+                if len(errs) > 0:
+                    print("ERROR reading images, removing name from labels")
+                    img_labels = self.get_encoded_labels(
+                        [name for name in names[i:i + self.chunk_size] if name not in errs])
+                else:
+                    img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+                yield images, img_labels
 
     def generate_training(self):
-        for v_ep in range(self.virt_dupl):
-            print("-->Virtual run [", str(v_ep), "]")
-            self.generate_data(self.train_ids, eval=False)
+        return self.generate_data(self.train_ids, evaluation=False)
 
     def generate_validation(self):
-        return self.generate_data(self.validation_ids, eval=True)
+        return self.generate_data(self.validation_ids, evaluation=True)
 
     def generate_testing(self):
-        return self.generate_data(self.test_ids, eval=True)
+        return self.generate_data(self.test_ids, evaluation=True)
 
     def load_images(self,img_names,folder):
         """

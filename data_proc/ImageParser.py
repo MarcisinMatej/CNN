@@ -36,17 +36,22 @@ def get_crop_resize(image_path, coords, mirror, rot_degree = 0, size=(100, 100))
     """
     image_obj = Image.open(image_path)
     #check coordinates
-    coords[0] = max(0, coords[0])
-    coords[1] = max(0, coords[1])
-    coords[2] = min(image_obj.size[0], coords[2])
-    coords[3] = min(image_obj.size[1], coords[3])
+    #need to create cords, because in case of evaluation they are returned as tuple from dictionary
+    cords = [0 for _ in range(4)]
+    cords[0] = max(0, coords[0])
+    cords[1] = max(0, coords[1])
+    cords[2] = min(image_obj.size[0], coords[2])
+    cords[3] = min(image_obj.size[1], coords[3])
     if mirror:
         image_obj = image_obj.transpose(Image.FLIP_LEFT_RIGHT)
     if rot_degree != 0:
         # Crop -> Rotate -> Resize -> Return
         # for more option on rotation see http://matthiaseisen.com/pp/patterns/p0201/
-        # image_obj.crop(coords).rotate(rot_degree, expand=True).resize(size, resample=0).show()
-        return image_obj.crop(coords).rotate(rot_degree, expand=True).resize(size, resample=0)
+        # name = "rot_" + str(rot_degree) + "_mir_" + str(mirror) + ".jpg"
+        # image_obj.crop(coords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR).save(name)
+        return image_obj.crop(cords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR)
     else:
         # Crop -> Resize -> Return
-        return image_obj.crop(coords).resize(size, resample=0)
+        # name = "rot_" + str(rot_degree) + "_mir_" + str(mirror) + ".jpg"
+        # image_obj.crop(coords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR).save(name)
+        return image_obj.crop(cords).resize(size, resample=Image.BILINEAR)
