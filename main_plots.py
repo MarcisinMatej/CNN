@@ -257,8 +257,11 @@ def plot_matrix(matrix, att_ind, alpha):
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[0]):
-            c = int(matrix[j, i]/sum(matrix[j,:])*100)
-            ax.text(i, j, str(c)+"%", va='center', ha='center')
+            c = int(round(matrix[j, i],0))
+            col = 'Black'
+            if c >= (0.8 * np.max(matrix)):
+                col = 'White'
+            ax.text(i, j, str(c)+"%", va='center', ha='center',size='x-large',color=col)
             ax.set_xticklabels([''] + alpha)
             ax.set_yticklabels([''] + alpha)
 
@@ -267,10 +270,10 @@ def plot_matrix(matrix, att_ind, alpha):
     plt.close("all")
 
 def convert_to_percentage_mat(matrix):
+    mat_sum = np.sum(matrix)
     for row_i in range(len(matrix)):
-        row_sum = sum(matrix[row_i])
         for col_i in range(len(matrix[row_i])):
-            matrix[row_i][col_i] = matrix[row_i][col_i]/row_sum
+            matrix[row_i][col_i] = matrix[row_i][col_i]/mat_sum*100
     return matrix
 
 def plot_diff_matrices(matrices,split_name):
@@ -283,6 +286,7 @@ def plot_diff_matrices(matrices,split_name):
 if __name__ == "__main__":
     plot_agg_epoch()
     # plot_all_epoch_hist()
-    # d_d = load_dictionary("diff_dict.npy")
-    # print(d_d['val'][-1])
-    # plot_diff_matrices(d_d['test'], "test")
+    d_d = load_dictionary("diff_dict.npy")
+    plot_diff_matrices(d_d['val'], "val")
+    plot_diff_matrices(d_d['train'], "train")
+    plot_diff_matrices(d_d['test'], "test")

@@ -2,6 +2,7 @@ from keras import optimizers
 
 from CNN import load_model, save_dictionary
 from data_proc.DataGenerator import DataGenerator
+from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataLoader import get_cat_attributes_names
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, prepare_eval_history, plot_matrix
@@ -81,7 +82,7 @@ if __name__ == "__main__":
     model, dict_vars = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-    generator = MyVirtualGenerator(resolution, bulk_size)
+    generator = DataGeneratorOnLine(resolution, bulk_size)
 
     matrices_dict = {}
     matrices_dict['val'] = run_difusion_matrix_validation(model, generator)

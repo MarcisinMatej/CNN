@@ -3,6 +3,7 @@ from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
 
+from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
@@ -73,7 +74,7 @@ def run_model():
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
-    generator = DataGenerator(resolution, bulk_size)
+    generator = DataGeneratorOnLine(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
@@ -107,7 +108,7 @@ def run_load_model():
     opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGenerator(resolution, bulk_size)
+    generator = DataGeneratorOnLine(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):

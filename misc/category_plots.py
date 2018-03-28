@@ -92,11 +92,11 @@ def plot_cat_bars_5():
     ind = np.arange(N)  # the x locations for the groups
     width = 0.52  # the width of the bars: can also be len(x) sequence
 
-    p1 = plt.bar(ind, cat_1, width, align="center",color = "dodgerblue")
-    p2 = plt.bar(ind, cat_2, width, align="center", bottom=cat_1,color = "orange")
-    p3 = plt.bar(ind, cat_3, bottom=[i + j for i, j in zip(cat_1, cat_2)], color='green', align="center",width=width)
-    p4 = plt.bar(ind, cat_4, bottom=[i + j + k for i, j, k in zip(cat_1, cat_2, cat_3)], color='purple',width=width, align="center")
-    p5 = plt.bar(ind, cat_5, bottom=[i + j + k + l for i, j, k, l in zip(cat_1, cat_2, cat_3, cat_4)], color='yellow', width=width, align="center")
+    p1 = plt.bar(ind, cat_1, width, align="center",color = "navy")
+    p2 = plt.bar(ind, cat_2, width, align="center", bottom=cat_1,color = "gold")
+    p3 = plt.bar(ind, cat_3, bottom=[i + j for i, j in zip(cat_1, cat_2)], color='mediumseagreen', align="center",width=width)
+    p4 = plt.bar(ind, cat_4, bottom=[i + j + k for i, j, k in zip(cat_1, cat_2, cat_3)], color='silver',width=width, align="center")
+    p5 = plt.bar(ind, cat_5, bottom=[i + j + k + l for i, j, k, l in zip(cat_1, cat_2, cat_3, cat_4)], color='palevioletred', width=width, align="center")
 
     plt.ylabel('Percentage')
     plt.title('Percentage of hair colors in datasets')

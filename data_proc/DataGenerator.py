@@ -93,7 +93,7 @@ class DataGenerator(object):
         while (i + self.chunk_size) < len(names):
             # img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             images, errs = self.load_images(names[i:i + self.chunk_size], folder)
-            i += self.chunk_size
+            
             # remove error labels
             if len(errs) > 0:
                 print("ERROR reading images, removing name from labels")
@@ -101,6 +101,7 @@ class DataGenerator(object):
                     [name for name in names[i:i + self.chunk_size] if name not in errs])
             else:
                 img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
+            i += self.chunk_size
             yield images, img_labels
 
         # yield the rest of images
