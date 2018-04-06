@@ -49,12 +49,12 @@ def get_crop_resize_virtualize(image_path, coords, mirror, rot_degree = 0, size=
         # Crop -> Rotate -> Resize -> Return
         # for more option on rotation see http://matthiaseisen.com/pp/patterns/p0201/
         # name = "rot_" + str(rot_degree) + "_mir_" + str(mirror) + ".jpg"
-        # image_obj.crop(coords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR).save(name)
-        return image_obj.crop(cords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR)
+        # image_obj.crop(coords).rotate(rot_degree, expand=True).resize(size, resample=Image.BILINEAR).save("virt_pict/ex_"+str(i)+".jpg")
+        return image_obj.crop(cords).rotate(rot_degree, expand=True).resize(size, resample=Image.BILINEAR)
     else:
         # Crop -> Resize -> Return
         # name = "rot_" + str(rot_degree) + "_mir_" + str(mirror) + ".jpg"
-        # image_obj.crop(coords).rotate(rot_degree, expand=False).resize(size, resample=Image.BILINEAR).save(name)
+        # image_obj.crop(coords).rotate(rot_degree, expand=True).resize(size, resample=Image.BILINEAR).save("virt_pict/ex_"+str(i)+".jpg")
         return image_obj.crop(cords).resize(size, resample=Image.BILINEAR)
 
 

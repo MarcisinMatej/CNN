@@ -62,7 +62,7 @@ def batch_time_test(model, generator):
 
 def RunModelBatchTest():
 
-    model = define_network(in_shape=in_shape)
+    model = define_network_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
 

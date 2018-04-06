@@ -1,4 +1,4 @@
-from CNN import *
+from CNN import save_model, load_model, define_network_with_BN, define_network
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
@@ -64,12 +64,58 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
         BEST_LOSS = agg
         BEST_EPOCH_IND = epoch_id
 
+
+def train_epoch_single(model, generator, ep_ind, ep_hist_train, out_index):
+    """
+    Procedure to train provided model with provide data from generator
+    in single epoch. After training results are plotted with plot_history(...) function.
+    :param model:
+    :param generator: yields through all training data
+    :param ep_ind: index of epoch
+    """
+    histories_train = []
+    train_gen = generator.generate_training()
+
+    # training
+    for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
+        # TODO here we can select just 1 attribute for training
+        histories_train.append(model.fit(X_train, Y_train[out_index], batch_size=batch_size, epochs=1))
+
+    save_model(model, model_path,ep_ind,BEST_LOSS,BEST_EPOCH_IND)
+    plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
+
+
+def validate_epoch_single(model, generator, epoch_id,ep_hist_val, out_index):
+    """
+    Procedure to validate provided model with provide data from generator
+    in single epoch. After evaluation the result is plotted with plot_history(...) function.
+    :param model:
+    :param generator:
+    :param epoch_id:
+    :return:
+    """
+    global BEST_LOSS,BEST_EPOCH_IND
+    hist_val = []
+    val_gen = generator.generate_validation()
+    agg = 0
+    for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
+        hist_val.append(model.evaluate(x=X_train, y=Y_train[out_index], batch_size=batch_size))
+        agg += hist_val[-1][0]
+    plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
+    # save model if we get better validation loss
+
+    if agg < BEST_LOSS:
+        print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
+        save_model(model, model_path+"best_",epoch_id,BEST_LOSS,BEST_EPOCH_IND)
+        BEST_LOSS = agg
+        BEST_EPOCH_IND = epoch_id
+
 def run_model():
     """
     Prepares fresh new model and network and runs it.
     :return:
     """
-    model = define_network(in_shape=in_shape)
+    model = define_network_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
@@ -80,6 +126,23 @@ def run_model():
         train_epoch(model, generator, e, ep_hist_train)
         # Validing epoch
         validate_epoch(model, generator, e, ep_hist_val)
+
+def run_model_with_single_out(ind):
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
+    model = define_network(in_shape=in_shape, single_output_ind=ind)
+    opt = optimizers.Adam(lr=learning_rate)
+    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    ep_hist_train = {}
+    ep_hist_val = {}
+    generator = DataGeneratorOnLine(resolution, bulk_size)
+    for e in range(n_epochs):
+        print("epoch %d" % e)
+        train_epoch_single(model, generator, e, ep_hist_train, ind)
+        # Validing epoch
+        validate_epoch_single(model, generator, e, ep_hist_val, ind)
 
 
 def load_network():
@@ -104,7 +167,7 @@ def run_load_model():
     print(vars_dict)
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
-    start_ep = vars_dict["epoch"]
+    start_ep = vars_dict["epoch"] + 1
     opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
@@ -119,6 +182,32 @@ def run_load_model():
         validate_epoch(model, generator, e, ep_hist_val)
 
 
+def run_load_model_single(ind):
+    """
+    Loads model from saved location and runs it.
+    :return:
+    """
+    global BEST_LOSS,BEST_EPOCH_IND
+    ep_hist_train = {}
+    ep_hist_val = {}
+    model,vars_dict = load_model(model_path)
+    print(vars_dict)
+    BEST_LOSS = vars_dict["loss"]
+    BEST_EPOCH_IND = vars_dict["ep_ind"]
+    start_ep = vars_dict["epoch"] + 1
+    opt = optimizers.Adam(lr=learning_rate)
+    # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
+    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    generator = DataGeneratorOnLine(resolution, bulk_size)
+
+    print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
+    for e in range(start_ep,n_epochs):
+        print("epoch %d" % e)
+        train_epoch_single(model, generator, e, ep_hist_train, ind)
+        # Validing epoch
+        validate_epoch_single(model, generator, e, ep_hist_val, ind)
+
+
 def run_load_model_virtual():
     """
     Loads model from saved location and runs it.
@@ -131,7 +220,7 @@ def run_load_model_virtual():
     print(vars_dict)
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
-    start_ep = vars_dict["epoch"]
+    start_ep = vars_dict["epoch"] + 1
     opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     generator = MyVirtualGenerator(resolution, bulk_size)
@@ -164,7 +253,7 @@ def run_model_virtual():
     with virtual image generator.
     :return:
     """
-    model = define_network(in_shape=in_shape)
+    model = define_network_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
@@ -185,9 +274,11 @@ if __name__ == "__main__":
     sess = tf.Session(config=config)
 
     # run_model()
-    run_model_virtual()
+    # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
     # run_load_model()
     # run_load_model_virtual()
+    # run_model_with_single_out(4)
+    run_load_model_single(4)

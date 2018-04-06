@@ -30,6 +30,22 @@ def eval_model(model, generator):
     return predictions, labels
 
 
+def eval_model_single_out(model, generator,ind):
+    predictions = []
+    labels = []
+    print("Wut?")
+    for X_data, Y_data in generator:  # these are chunks of ~bulk pictures
+        predictions = model.predict(X_data, batch_size=batch_size)
+        labels = Y_data[ind]
+        break
+
+    for X_data, Y_data in generator:  # these are chunks of ~bulk pictures
+        res = model.predict(X_data, batch_size=batch_size)
+        predictions = np.concatenate((predictions, res), axis=0)
+        labels = np.concatenate((labels, Y_data[ind]), axis=0)
+    return predictions, labels
+
+
 def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
     matrices = []
     att_cnt = len(predictions)
@@ -54,6 +70,7 @@ def run_difusion_matrix_validation(model, generator):
     preds, labs = eval_model(model, generator.generate_validation())
     return generate_dif_mat(preds,labs,False,"val")
 
+
 def run_difusion_matrix_train(model, generator):
     preds, labs = eval_model(model, generator.generate_training())
     return generate_dif_mat(preds, labs,False,"train")
@@ -64,12 +81,33 @@ def run_difusion_matrix_test(model, generator):
     return generate_dif_mat(preds, labs,False,"tst")
 
 
+def run_difusion_matrix_single(model, generator, ind, name):
+    preds, labs = eval_model_single_out(model, generator, ind)
+    return generate_dif_mat(preds, labs,False,name)
+
+
 def test_model(model, generator):
     hist_tst = []
     tst_gen = generator.generate_testing()
     for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
         hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
     plot_history(prepare_eval_history(hist_tst), {}, 'Eval_testing', plot_flag=False,ser_flg=True,agg=False)
+
+
+def evaluate_all(model,generator):
+    matrices_dict = {'val': run_difusion_matrix_validation(model, generator),
+                     'train': run_difusion_matrix_train(model, generator),
+                     'test': run_difusion_matrix_test(model, generator)}
+    save_dictionary(path_loc="diff_dict", dict=matrices_dict)
+    test_model(model, generator)
+
+
+def evaluate_single(model,generator,ind):
+    matrices_dict = {'val': run_difusion_matrix_single(model, generator.generate_validation(),ind,"val"),
+                     'train': run_difusion_matrix_single(model, generator.generate_training(),ind,"train"),
+                     'test': run_difusion_matrix_single(model, generator.generate_testing(),ind,"tst")}
+    save_dictionary(path_loc="diff_dict", dict=matrices_dict)
+    test_model(model, generator)
 
 
 if __name__ == "__main__":
@@ -84,9 +122,5 @@ if __name__ == "__main__":
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
     generator = DataGeneratorOnLine(resolution, bulk_size)
 
-    matrices_dict = {}
-    matrices_dict['val'] = run_difusion_matrix_validation(model, generator)
-    matrices_dict['train'] = run_difusion_matrix_train(model, generator)
-    matrices_dict['test'] = run_difusion_matrix_test(model, generator)
-    save_dictionary(path_loc="diff_dict", dict=matrices_dict)
-    test_model(model, generator)
+    # evaluate_all(model,generator)
+    evaluate_single(model,generator,4)
