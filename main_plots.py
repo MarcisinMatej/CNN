@@ -271,10 +271,22 @@ def plot_matrix(matrix, att_ind, alpha):
 
 def convert_to_percentage_mat(matrix):
     mat_sum = np.sum(matrix)
+    round_matrix = np.zeros(np.shape(matrix),dtype=int)
     for row_i in range(len(matrix)):
         for col_i in range(len(matrix[row_i])):
             matrix[row_i][col_i] = matrix[row_i][col_i]/mat_sum*100
-    return matrix
+            # take lower part
+            round_matrix[row_i][col_i] = math.floor(matrix[row_i][col_i])
+            # leave just float part
+            matrix[row_i][col_i] -= round_matrix[row_i][col_i]
+
+    while (100 - np.sum(round_matrix)) != 0:
+        # get the index of biggest value in matrix
+        ind = np.unravel_index(np.argmax(matrix, axis=None), matrix.shape)
+        round_matrix[ind] += 1
+        matrix[ind] = 0
+
+    return round_matrix
 
 def plot_diff_matrices(matrices,split_name):
     names = get_cat_attributes_names()

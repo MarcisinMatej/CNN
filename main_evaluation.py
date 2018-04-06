@@ -49,9 +49,12 @@ def eval_model_single_out(model, generator,ind):
 def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
     matrices = []
     att_cnt = len(predictions)
+    #TODO find better solution :D
+    if att_cnt > 100:
+        att_cnt = 1
     #todo add iff predictions empty
     for i in range(att_cnt):
-        s = (len(predictions[i][0]), len(predictions[i][0]))
+        s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
         matrices.append(np.zeros(shape=s))
 
     for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
