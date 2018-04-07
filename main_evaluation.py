@@ -57,11 +57,19 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
         s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
         matrices.append(np.zeros(shape=s))
 
-    for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
-        for pred, lab in zip(att_pred,att_lab):
-            p = np.argmax(pred)
-            l = np.argmax(lab)
-            matrices[i][p][l] += 1
+    # multi case
+    # for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
+    #     for pred, lab in zip(att_pred,att_lab):
+    #         p = np.argmax(pred)
+    #         l = np.argmax(lab)
+    #         matrices[i][p][l] += 1
+
+    # single case
+    for pred, lab in zip(predictions, labels):
+        p = np.argmax(pred)
+        l = np.argmax(lab)
+        matrices[0][p][l] += 1
+
     if plot_flg:
         for i in range(att_cnt):
             plot_matrix(matrices[i],str(i)+"_"+sub_set+"_",get_cat_attributes_names())
@@ -110,7 +118,7 @@ def evaluate_single(model,generator,ind):
                      'train': run_difusion_matrix_single(model, generator.generate_training(),ind,"train"),
                      'test': run_difusion_matrix_single(model, generator.generate_testing(),ind,"tst")}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
-    test_model(model, generator)
+    # test_model(model, generator)
 
 
 if __name__ == "__main__":

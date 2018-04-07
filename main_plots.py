@@ -19,7 +19,8 @@ COLORS = {"Attract_acc":"g","Attract_loss":"g",
                 "Gender_acc":"c","Gender_loss":"c",
                 "Smile_acc":"m", "Smile_loss":"m",
                 "Hair_acc":"y","Hair_loss":"y",
-                "Agg_loss":"b"
+                "Agg_loss":"b",
+                "loss":"b","acc":"b"
                 }
 
 COlOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
@@ -29,6 +30,7 @@ tmp_solution = {"1_acc": "Attract_acc", "1_loss": "Attract_loss",
                 "3_acc": "Gender_acc", "3_loss": "Gender_loss",
                 "4_acc": "Smile_acc", "4_loss": "Smile_loss",
                 "5_acc": "Hair_acc", "5_loss": "Hair_loss",
+                "acc":"acc",
                 "loss": "Agg_loss",
                 "acc0": "Attract_acc", "loss1": "Attract_loss",
                 "acc1": "Glass_acc", "loss2": "Glass_loss",
@@ -233,6 +235,7 @@ def plot_all_epoch_hist():
             plot_loss(load_dictionary(path), "val_" + str(i_v))
             i_v+=1
 
+
 def recode_category_names(mydict):
     new_dict = {}
     print(mydict.keys())
@@ -240,7 +243,6 @@ def recode_category_names(mydict):
         new_key = tmp_solution[old_key]
         new_dict[new_key] = mydict[old_key]
     return new_dict
-
 
 
 def plot_matrix(matrix, att_ind, alpha):
@@ -269,7 +271,15 @@ def plot_matrix(matrix, att_ind, alpha):
     plt.savefig(figures_path + "confusions/" + str(att_ind))
     plt.close("all")
 
+
 def convert_to_percentage_mat(matrix):
+    """
+    Converts frequency matrix into percentage matrix.
+    Values in percentage matrix will add up to 100 and will be rounded to integers.
+    Rounding of values is done by adding largest remainder method.
+    :param matrix:
+    :return:
+    """
     mat_sum = np.sum(matrix)
     round_matrix = np.zeros(np.shape(matrix),dtype=int)
     for row_i in range(len(matrix)):
@@ -281,12 +291,14 @@ def convert_to_percentage_mat(matrix):
             matrix[row_i][col_i] -= round_matrix[row_i][col_i]
 
     while (100 - np.sum(round_matrix)) != 0:
-        # get the index of biggest value in matrix
+        # get the index of biggest remainder in matrix
         ind = np.unravel_index(np.argmax(matrix, axis=None), matrix.shape)
+        # increase rounded values, zero the float
         round_matrix[ind] += 1
         matrix[ind] = 0
 
     return round_matrix
+
 
 def plot_diff_matrices(matrices,split_name):
     names = get_cat_attributes_names()
@@ -296,7 +308,7 @@ def plot_diff_matrices(matrices,split_name):
 
 
 if __name__ == "__main__":
-    # plot_agg_epoch()
+    plot_agg_epoch()
     # plot_all_epoch_hist()
     d_d = load_dictionary("diff_dict.npy")
     plot_diff_matrices(d_d['val'], "val")
