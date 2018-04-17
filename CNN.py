@@ -13,9 +13,78 @@ history_path = "histories/"
 config_path_var = "data_proc/config_files/training_vars.npy"
 
 
-def Conv2DBatchNormRelu(n_filter, w_filter, h_filter, inputs, ind):
-    return Activation(activation='relu',name="ReLU_"+ind)(BatchNormalization(name="BatchNorm_"+ind)
-                    (Conv2D(n_filter, (w_filter, h_filter), padding='valid',name="Conv2D_"+ind)(inputs)))
+def Conv2DBatchNormRelu(n_filter, w_filter, h_filter, inputs, ind,_padding="valid"):
+    return Activation(activation='relu',name="ReLU_"+ind)(BatchNormalization(name="BN_"+ind)
+                    (Conv2D(n_filter, (w_filter, h_filter), padding=_padding,name="Conv_"+str(n_filter)+"_"+ind)(inputs)))
+
+def define_network_2_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
+    """
+    Creates model for CNN with Keras functional api.
+    Model graph is fixed and before each activation function is
+    normalization layer. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
+    :param in_shape: tuple (x,y,z) of input shape for model
+    :return: keras model
+    """
+
+    channel = "channels_last"
+    #define shape of input
+    inputs = Input(shape=in_shape,name="input")
+
+    # define layers relationships
+    conv1 = Conv2DBatchNormRelu(32, 3, 3, inputs=inputs,ind='1')
+    conv2 = Conv2DBatchNormRelu(32,3, 3, inputs=conv1,ind='2')
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_1")(conv2)
+    conv3 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp1,ind='3')
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_2")(conv3)
+    conv4 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp2,ind='4')
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_3")(conv4)
+    conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3,ind='5')
+    conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5,ind='6')
+    conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6,ind='7')
+    output_layers = []
+
+    output_layers = []
+    # output layers
+    conv8 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='8')
+    flatten1 = Flatten()(conv8)
+    out1 = Dense(2, activation='softmax',name="Attractiveness")(flatten1)
+    output_layers.append(out1)
+
+    conv9 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='9')
+    flatten2 = Flatten()(conv9)
+    out2 = Dense(2, activation='softmax',name="Glass")(flatten2)
+    output_layers.append(out2)
+
+    conv10 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='10')
+    flatten3 = Flatten()(conv10)
+    out3 = Dense(2, activation='softmax',name="Gender")(flatten3)
+    output_layers.append(out3)
+
+    conv11 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='11')
+    flatten4 = Flatten()(conv11)
+    out4 = Dense(2, activation='softmax',name="Smile")(flatten4)
+    output_layers.append(out4)
+
+    conv12 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3, ind='12',_padding="same")
+    conv13 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv12, ind='13')
+    conv14 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv13, ind='14')
+    conv15 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv14, ind='15')
+    flatten5 = Flatten()(conv15)
+    out5 = Dense(5, activation='softmax',name="Hair")(flatten5)
+    output_layers.append(out5)
+
+    model = Model(inputs=inputs, outputs=output_layers)
+
+    # summarize layers
+    print(model.summary())
+    #TODO plot model
+    # _plot_model(model)
+    # plot_model(model, to_file='model.png')
+    return model
+
 
 def define_network_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
     """
@@ -36,11 +105,11 @@ def define_network_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
     # define layers relationships
     conv1 = Conv2DBatchNormRelu(32, 3, 3, inputs=inputs,ind='1')
     conv2 = Conv2DBatchNormRelu(32,3, 3, inputs=conv1,ind='2')
-    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel)(conv2)
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_1")(conv2)
     conv3 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp1,ind='3')
-    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel)(conv3)
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_2")(conv3)
     conv4 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp2,ind='4')
-    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel)(conv4)
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_3")(conv4)
     conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3,ind='5')
     conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5,ind='6')
     conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6,ind='7')

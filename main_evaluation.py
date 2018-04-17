@@ -54,21 +54,30 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
         att_cnt = 1
     #todo add iff predictions empty
     for i in range(att_cnt):
-        s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
+        l = len(predictions[i][0])
+        s = (l, l)
+        print("Shape:",s)
         matrices.append(np.zeros(shape=s))
 
+    #single case
+    # for i in range(att_cnt):
+    #     s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
+    #     matrices.append(np.zeros(shape=s))
+
+
+
     # multi case
-    # for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
-    #     for pred, lab in zip(att_pred,att_lab):
-    #         p = np.argmax(pred)
-    #         l = np.argmax(lab)
-    #         matrices[i][p][l] += 1
+    for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
+        for pred, lab in zip(att_pred,att_lab):
+            p = np.argmax(pred)
+            l = np.argmax(lab)
+            matrices[i][p][l] += 1
 
     # single case
-    for pred, lab in zip(predictions, labels):
-        p = np.argmax(pred)
-        l = np.argmax(lab)
-        matrices[0][p][l] += 1
+    # for pred, lab in zip(predictions, labels):
+    #     p = np.argmax(pred)
+    #     l = np.argmax(lab)
+    #     matrices[0][p][l] += 1
 
     if plot_flg:
         for i in range(att_cnt):
@@ -133,5 +142,5 @@ if __name__ == "__main__":
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
     generator = DataGeneratorOnLine(resolution, bulk_size)
 
-    # evaluate_all(model,generator)
-    evaluate_single(model,generator,4)
+    evaluate_all(model,generator)
+    # evaluate_single(model,generator,4)

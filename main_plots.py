@@ -310,7 +310,7 @@ def plot_diff_matrices(matrices,split_name):
 if __name__ == "__main__":
     plot_agg_epoch()
     # plot_all_epoch_hist()
-    d_d = load_dictionary("diff_dict.npy")
-    plot_diff_matrices(d_d['val'], "val")
-    plot_diff_matrices(d_d['train'], "train")
-    plot_diff_matrices(d_d['test'], "test")
+    # d_d = load_dictionary("diff_dict.npy")
+    # plot_diff_matrices(d_d['val'], "val")
+    # plot_diff_matrices(d_d['train'], "train")
+    # plot_diff_matrices(d_d['test'], "test")

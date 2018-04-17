@@ -1,4 +1,4 @@
-from CNN import save_model, load_model, define_network_with_BN, define_network
+from CNN import save_model, load_model, define_network_with_BN, define_network, define_network_2_with_BN
 from keras import optimizers
 from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
@@ -16,7 +16,10 @@ resolution = (100, 100)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
 BEST_EPOCH_IND = 0
-learning_rate = 0.0000007
+# without BN
+# learning_rate = 0.0000007
+# with BN
+learning_rate = 0.000007
 
 
 def train_epoch(model, generator, ep_ind, ep_hist_train):
@@ -115,7 +118,7 @@ def run_model():
     Prepares fresh new model and network and runs it.
     :return:
     """
-    model = define_network_with_BN(in_shape=in_shape)
+    model = define_network_2_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
@@ -273,7 +276,7 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # run_model()
+    run_model()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
@@ -281,4 +284,4 @@ if __name__ == "__main__":
     # run_load_model()
     # run_load_model_virtual()
     # run_model_with_single_out(4)
-    run_load_model_single(4)
+    #run_load_model_single(4)
