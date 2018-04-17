@@ -48,30 +48,24 @@ def define_network_2_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
 
     output_layers = []
     # output layers
-    conv8 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='8')
+    conv8 = Conv2D(2048, (1, 1), name='Conv_8')(conv7)
     flatten1 = Flatten()(conv8)
     out1 = Dense(2, activation='softmax',name="Attractiveness")(flatten1)
     output_layers.append(out1)
 
-    conv9 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='9')
+    conv9 = Conv2D(2048, (1, 1), name='Conv_9')(conv7)
     flatten2 = Flatten()(conv9)
     out2 = Dense(2, activation='softmax',name="Glass")(flatten2)
     output_layers.append(out2)
-
-    conv10 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='10')
-    flatten3 = Flatten()(conv10)
-    out3 = Dense(2, activation='softmax',name="Gender")(flatten3)
+    out3 = Dense(2, activation='softmax',name="Gender")(flatten2)
     output_layers.append(out3)
-
-    conv11 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7, ind='11')
-    flatten4 = Flatten()(conv11)
-    out4 = Dense(2, activation='softmax',name="Smile")(flatten4)
+    out4 = Dense(2, activation='softmax',name="Smile")(flatten2)
     output_layers.append(out4)
 
     conv12 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3, ind='12',_padding="same")
     conv13 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv12, ind='13')
     conv14 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv13, ind='14')
-    conv15 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv14, ind='15')
+    conv15 = Conv2D(2048, (1, 1), name='Conv_15')(conv14)
     flatten5 = Flatten()(conv15)
     out5 = Dense(5, activation='softmax',name="Hair")(flatten5)
     output_layers.append(out5)
@@ -113,7 +107,8 @@ def define_network_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
     conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3,ind='5')
     conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5,ind='6')
     conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6,ind='7')
-    conv8 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7,ind='8')
+    # conv8 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7,ind='8')
+    conv8 = Conv2D(2048, (1, 1), name='Conv_8')(conv7)
     flatten = Flatten()(conv8)
     output_layers = []
 
