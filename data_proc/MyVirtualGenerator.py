@@ -20,7 +20,7 @@ SEED = 713
 
 class MyVirtualGenerator(object):
     """Generates data for Keras"""
-    def __init__(self, img_shape=(100, 100), chunk_size=1024, rot_int=(-10, 10), sc_int=(-5, 5), virt_dupl=5):
+    def __init__(self, img_shape=(100, 100), chunk_size=1024, rot_int=(-10, 10), sc_int=(-5, 5), virt_dupl=1):
         """
 
         :param img_shape: resolution of final image

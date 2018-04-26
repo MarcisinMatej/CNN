@@ -27,6 +27,11 @@ def load_label_txts():
     return attr_vals, attr_map
 
 
+def load_atributes_txts():
+    with open(PATH+'attributes.txt') as file_attrs:
+        return file_attrs.readlines()
+
+
 def matrix_image(image):
     Standard_size = (32,32)
     "opens image and converts it to a m*n matrix"

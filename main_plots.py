@@ -37,7 +37,12 @@ tmp_solution = {"1_acc": "Attract_acc", "1_loss": "Attract_loss",
                 "acc2": "Gender_acc", "loss3": "Gender_loss",
                 "acc3": "Smile_acc", "loss4": "Smile_loss",
                 "acc4": "Hair_acc", "loss5": "Hair_loss",
-                "Agg_loss": "Agg_loss"
+                "Agg_loss": "Agg_loss",
+                "Attractiveness_acc": "Attract_acc", "Attractiveness_loss": "Attract_loss",
+                "Glass_acc": "Glass_acc", "Glass_loss": "Glass_loss",
+                "Gender_acc": "Gender_acc", "Gender_loss": "Gender_loss",
+                "Smile_acc": "Smile_acc", "Smile_loss": "Smile_loss",
+                "Hair_acc": "Hair_acc", "Hair_loss": "Hair_loss"
                 }
 
 
@@ -135,6 +140,7 @@ def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_f
     if ser_flg:
         serialize_history(history,epoch_ind)
 
+
 def merge_history(histories):
     """
     Helper method which merges multiple history files.
@@ -153,6 +159,7 @@ def merge_history(histories):
 
     return history
 
+
 def merge_epoch_history(avg_histories, epoch_hist):
     """
     Helper method which appends history of the last epoch
@@ -166,7 +173,6 @@ def merge_epoch_history(avg_histories, epoch_hist):
     if len(avg_histories.keys()) <= 0:
         for key in epoch_hist.keys():
             avg_histories[key] = []
-            #TODO remove?
             avg_histories[key].append(epoch_hist[key][0])
 
     for key in epoch_hist.keys():
@@ -198,7 +204,7 @@ def prepare_eval_history(histories):
     return history
 
 
-def stringSplitByNumbers(x):
+def string_split_by_numbers(x):
     r = re.compile('(\d+)')
     l = r.split(x)
     return [int(y) if y.isdigit() else y for y in l]
@@ -207,7 +213,7 @@ def stringSplitByNumbers(x):
 def plot_agg_epoch():
     agg_hist_train = {}
     agg_hist_val = {}
-    paths = sorted(glob.glob(history_path + "*.npy"), key = stringSplitByNumbers)
+    paths = sorted(glob.glob(history_path + "*.npy"), key = string_split_by_numbers)
     for path in paths:
         if "train" in path:
             agg_hist_train = merge_epoch_history(agg_hist_train, load_dictionary(path))
@@ -224,7 +230,7 @@ def plot_agg_epoch():
 
 
 def plot_all_epoch_hist():
-    paths = sorted(glob.glob(history_path + "*.npy"), key=stringSplitByNumbers)
+    paths = sorted(glob.glob(history_path + "*.npy"), key=string_split_by_numbers)
     i_t= 0
     i_v=0
     for path in paths:
@@ -277,8 +283,8 @@ def convert_to_percentage_mat(matrix):
     Converts frequency matrix into percentage matrix.
     Values in percentage matrix will add up to 100 and will be rounded to integers.
     Rounding of values is done by adding largest remainder method.
-    :param matrix:
-    :return:
+    :param matrix: frequency diffusion matrix
+    :return: percentage diffusion matrix
     """
     mat_sum = np.sum(matrix)
     round_matrix = np.zeros(np.shape(matrix),dtype=int)
@@ -290,6 +296,7 @@ def convert_to_percentage_mat(matrix):
             # leave just float part
             matrix[row_i][col_i] -= round_matrix[row_i][col_i]
 
+    # Round values so we will get 100% in total
     while (100 - np.sum(round_matrix)) != 0:
         # get the index of biggest remainder in matrix
         ind = np.unravel_index(np.argmax(matrix, axis=None), matrix.shape)
@@ -300,7 +307,15 @@ def convert_to_percentage_mat(matrix):
     return round_matrix
 
 
-def plot_diff_matrices(matrices,split_name):
+def plot_diff_matrices(matrices, split_name):
+    """
+    Plots percentage diffusion matrices and saves them as .png files
+    into figures/confusion folder
+    :param matrices:
+    :param split_name: train/test/validation, it will be used as prefix
+    for saved images
+    :return:
+    """
     names = get_cat_attributes_names()
     categories = get_category_names()
     for matrix,alpha,cat in zip(matrices,names,categories):
@@ -309,7 +324,7 @@ def plot_diff_matrices(matrices,split_name):
 
 if __name__ == "__main__":
     plot_agg_epoch()
-    # plot_all_epoch_hist()
+    # #plot_all_epoch_hist()
     d_d = load_dictionary("diff_dict.npy")
     plot_diff_matrices(d_d['val'], "val")
     plot_diff_matrices(d_d['train'], "train")

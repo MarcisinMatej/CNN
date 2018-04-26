@@ -1,10 +1,8 @@
-
-
-from CNN import load_dictionary
 from keras.preprocessing import image
 
+from CNN import load_dictionary
 from data_proc.DataGenerator import data_folder
-from data_proc.DataLoader import load_folder_txts, load_attr_vals_txts
+from data_proc.DataLoader import load_folder_txts, load_attr_vals_txts, load_atributes_txts
 import numpy as np
 
 from data_proc.ImageParser import get_crop_resize
@@ -12,6 +10,13 @@ from data_proc.ImagePreProcess import load_crop_boxes
 
 LABEL_DICT_PATH = "data_proc/encoded_labels.npy"
 IMAGES_FOLDER = "data_proc/CelebA/img_align_celeba/"
+CHANCE = 0.25
+
+MASKS = [[True, False, False, False, False],
+         [False, True, False, False, False],
+         [False, False, True, False, False],
+         [False, False, False, True, False],
+         [False, False, False, False, True]]
 
 
 class DataGeneratorOnLine(object):
@@ -76,7 +81,33 @@ class DataGeneratorOnLine(object):
             to_return.append(self.attr_map[key])
         # need to transform to N arrays, as KERAS requires all labels for one output/attribute
         # in single array, so for 5 attributes and bulk 1024, it will be 5 arrays of length
-        # 1024
+        # 10240
+        return [np.array(tmp_arr) for tmp_arr in zip(*to_return)]
+
+    def hide_values(self, vals, mask):
+        to_ret = []
+        for val, m in zip(vals, mask):
+            if m:
+                to_ret.append(val)
+            else:
+                to_ret.append([-1 for i in val])
+        return to_ret
+
+    def get_encoded_labels_h(self, keys, mask):
+        """
+        Generate labels from attribute file for list of keys,
+        the labels are returned in the same order as corresponding
+        keys in parameter list.
+        :param keys: list of labels in string format
+        :return: labels for specific batch of data in one-hot encoded format
+        """
+        to_return = []
+        for key in keys:
+            # Values for categorical loss
+            to_return.append(self.hide_values(self.attr_map[key], mask))
+        # need to transform to N arrays, as KERAS requires all labels for one output/attribute
+        # in single array, so for 5 attributes and bulk 1024, it will be 5 arrays of length
+        # 10240
         return [np.array(tmp_arr) for tmp_arr in zip(*to_return)]
 
     def generate_data(self, names):
@@ -102,8 +133,48 @@ class DataGeneratorOnLine(object):
                 img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             yield images, img_labels
 
+    def generate_data_hidden(self, pict_ids):
+        """
+        Generates data with hiding attributes according to MASKs
+        :param pict_ids: ids of pictures
+        :return:
+        """
+        i = 0
+        while (i + self.chunk_size) < len(pict_ids):
+            if i/len(pict_ids) < 0.3 :
+                mask = MASKS[0]
+            elif i/len(pict_ids) < 0.6 :
+                mask = MASKS[1]
+            else:
+                mask = MASKS[2]
+
+            images, errs = self.get_images_online(pict_ids[i:i + self.chunk_size])
+            if len(errs) > 0:
+                img_labels = self.get_encoded_labels_h(
+                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs],
+                                                        mask)
+            else:
+                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size],
+                                                       mask)
+            i += self.chunk_size
+            yield images, img_labels
+
+        # yield the rest of images
+        if i < len(pict_ids):
+            images, errs = self.get_images_online(pict_ids[i:len(pict_ids)])
+            if len(errs) > 0:
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels_h(
+                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs], mask)
+            else:
+                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size], mask)
+            yield images, img_labels
+
     def generate_training(self):
         return self.generate_data(self.train_ids)
+
+    def generate_training_masked(self):
+        return self.generate_data_hidden(self.train_ids)
 
     def generate_validation(self):
         return self.generate_data(self.validation_ids)
@@ -140,6 +211,11 @@ class DataGeneratorOnLine(object):
 
     @staticmethod
     def expand_coords(coords):
+        """
+        Expands coordinates by 25%
+        :param coords:
+        :return:
+        """
         sc_coords = []
         # increase/decrease by scale, then increase borders to each direction by 25 %, convert to int
         sc_coords.append(int((coords[0]) * 0.75))

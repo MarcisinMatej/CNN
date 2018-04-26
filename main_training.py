@@ -1,13 +1,13 @@
-from CNN import save_model, load_model, define_network_with_BN, define_network, define_network_2_with_BN
-from keras import optimizers
-from data_proc.DataGenerator import DataGenerator
 import tensorflow as tf
+from keras import optimizers
 
+from CNN import save_model, load_model, define_network_with_BN, define_network
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
+from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
-bulk_size = 10240
+bulk_size = 1024
 model_path = 'models/'
 n_epochs = 100
 batch_size = 124
@@ -17,9 +17,51 @@ VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
 BEST_EPOCH_IND = 0
 # without BN
-# learning_rate = 0.0000007
+learning_rate = 0.0000007
 # with BN
-learning_rate = 0.000007
+# learning_rate = 0.0000007
+mask_value = -1
+
+def _to_tensor(x, dtype):
+    """Convert the input `x` to a tensor of type `dtype`.
+
+    # Arguments
+        x: An object to be converted (numpy array, list, tensors).
+        dtype: The destination type.
+
+    # Returns
+        A tensor.
+    """
+    x = tf.convert_to_tensor(x)
+    if x.dtype != dtype:
+        x = tf.cast(x, dtype)
+    return x
+
+
+from keras import backend as K
+# def masked_loss_functions(target, output):
+#     # mask = K.cumprod(K.cast(K.not_equal(target, mask_value), tf.int64))
+#     mask = tf.reshape(K.cast(K.not_equal(target, mask_value), tf.int64), shape=(-1, 1))
+#     # tf.nn.weighted_cross_entropy_with_logits()
+#     # if mask == 0:
+#     #     losses = K.sparse_categorical_crossentropy(output, output)
+#     # else:
+#     losses = K.sparse_categorical_crossentropy(target,output)
+#     losses = tf.reshape(losses, shape=(-1, 1))
+#     return tf.losses.compute_weighted_loss(
+#         weights=mask,
+#         losses=losses)
+
+def masked_accuracy(y_true, y_pred):
+    dtype = K.floatx()
+    total = K.sum(K.cast(K.not_equal(y_true, mask_value), dtype))
+    correct = K.sum(K.cast(K.equal(y_true, K.round(y_pred)), dtype))
+    return correct / total
+
+
+def masked_loss_function(target, output):
+    mask = K.cast(K.not_equal(target, mask_value), K.floatx())
+    return K.sparse_categorical_crossentropy(tf.multiply(target, mask), tf.multiply(output, mask))
 
 
 def train_epoch(model, generator, ep_ind, ep_hist_train):
@@ -66,6 +108,8 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
         save_model(model, model_path+"best_",epoch_id,BEST_LOSS,BEST_EPOCH_IND)
         BEST_LOSS = agg
         BEST_EPOCH_IND = epoch_id
+    else:
+        print("AGG LOSS NOT IMPROVED, BEST:" + str(BEST_LOSS) + ", current:" + str(agg))
 
 
 def train_epoch_single(model, generator, ep_ind, ep_hist_train, out_index):
@@ -118,12 +162,14 @@ def run_model():
     Prepares fresh new model and network and runs it.
     :return:
     """
-    model = define_network_2_with_BN(in_shape=in_shape)
+    model = define_network_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
-    model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
+    # model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
+    model.compile(optimizer=opt, loss=masked_loss_function, loss_weights=[1, 1, 1, 1, 1],
+                  metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
-    generator = DataGeneratorOnLine(resolution, bulk_size)
+    generator = DataGeneratorOnLineSparse(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
@@ -173,8 +219,9 @@ def run_load_model():
     start_ep = vars_dict["epoch"] + 1
     opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
-    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGeneratorOnLine(resolution, bulk_size)
+    # model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    model.compile(optimizer=opt,loss=masked_loss_function, metrics=['accuracy'])
+    generator = DataGeneratorOnLineSparse(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
@@ -256,7 +303,7 @@ def run_model_virtual():
     with virtual image generator.
     :return:
     """
-    model = define_network_with_BN(in_shape=in_shape)
+    model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
@@ -281,7 +328,7 @@ if __name__ == "__main__":
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
-    # run_load_model()
+    run_load_model()
     # run_load_model_virtual()
-    # run_model_with_single_out(4)
-    #run_load_model_single(4)
+    # run_model_with_single_out(1)
+    # run_load_model_single(1)
