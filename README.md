@@ -41,14 +41,14 @@ Provide step by step series of examples and explanations about how to get a deve
 
 ### Folder structure
 
-.   						# CNN - Main directory
-├── data_proc               # Scripts responsible for pre processing of data, loading data, etc..
-│    ├── config_files       # Configuration files like attributes labels, description files, 
-│    └── data               # Parent directory for databases
-│         └── celebA        # Database with celebA dataset
-├── figures				    # Parent folder for all graphs and plots like history plots
-│	   └── confusions 		# Folder for confusion matrices with error rates
-└── model					# Saved model from the last epoch and the best achieved validation error model
+    .   						# CNN - Main directory
+    ├── data_proc               # Scripts responsible for pre processing of data, loading data, etc..
+    │    ├── config_files       # Configuration files like attributes labels, description files, 
+    │    └── data               # Parent directory for databases
+    │         └── celebA        # Database with celebA dataset
+    ├── figures				    # Parent folder for all graphs and plots like history plots
+    │	   └── confusions 		# Folder for confusion matrices with error rates
+    └── model					# Saved model from the last epoch and the best     achieved validation error model
 
 
 ## API Reference
