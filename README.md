@@ -22,10 +22,8 @@ If you're using any code style like xo, standard etc. That will help others whil
 Include logo/demo screenshot etc.
 
 ## Tech/framework used
-Ex. -
 
 <b>Software versions:</b>
-- [Electron](https://electron.atom.io)
 - [Python v 3.5.2] (https://www.python.org/downloads/release/python-352/)
 - [Keras 2.0.8] (https://faroit.github.io/keras-docs/2.0.8/)
 - [Keras backend : Tensorflow 1.2.1] (https://www.tensorflow.org/)
@@ -42,16 +40,16 @@ Show what the library does as concisely as possible, developers should be able t
 Provide step by step series of examples and explanations about how to get a development env running.
 
 ## Folder structure
-CNN(main directory)
-	 '-->data_proc
-	      '-->config_files
-	      '-->data
-		    '-->test
-		    '-->train
-		    '-->validation
-   	 '-->figures
-   	       '-->confusions
-	 '-->model
+
+.CNN 						  # Main directory
+  ├── data_proc               # Scripts responsible for pre processing of data, loading data, etc..
+  │    ├── config_files       # Configuration files like attributes labels, description files, 
+  │    └── data               # Parent directory for databases
+  │         └── celebA        # Database with celebA dataset
+  ├── figures				  # Parent folder for all graphs and plots like history plots
+  │	   └── confusions 		  # Folder for confusion matrices with error rates
+  └── model					  # Saved model from the last epoch and the best achieved validation error model
+
 
 ## API Reference
 
@@ -68,7 +66,9 @@ If people like your project they’ll want to learn how they can use it. To do s
 Let people know how they can contribute into your project. A [contributing guideline](https://github.com/zulip/zulip-electron/blob/master/CONTRIBUTING.md) will be a big plus.
 
 ## Credits
-Give proper credits. This could be a link to any repo which inspired you to build this project, any blogposts or links to people who contrbuted in this project. 
+
+
+README.md template thanks to [Akash Nimare](https://medium.com/@meakaakka/a-beginners-guide-to-writing-a-kickass-readme-7ac01da88ab3) 
 
 #### Anything else that seems useful
 
