@@ -47,18 +47,13 @@ def eval_model_single_out(model, generator,ind):
 def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
     matrices = []
     att_cnt = len(predictions)
-    #TODO find better solution :D
-    if att_cnt > 100:
-        att_cnt = 1
     #todo add iff predictions empty
-    #multi case
     for i in range(att_cnt):
         l = len(predictions[i][0])
         s = (l, l)
         print("Shape:",s)
         matrices.append(np.zeros(shape=s))
 
-    # multi case
     for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
         for pred, lab in zip(att_pred,att_lab):
             if lab != mask_value:
@@ -69,15 +64,6 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
 
                 # sparse
                 matrices[i][p][lab] += 1
-                # single case
-                # for i in range(att_cnt):
-                #     s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
-                #     matrices.append(np.zeros(shape=s))
-                # # single case
-                # for pred, lab in zip(predictions, labels):
-                #     p = np.argmax(pred)
-                #     l = np.argmax(lab)
-                #     matrices[0][p][l] += 1
 
     if plot_flg:
         for i in range(att_cnt):
@@ -85,49 +71,63 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
     return matrices
 
 
-def run_difusion_matrix_validation(model, generator):
+def generate_dif_mat_single(predictions, labels, plot_flg=False,sub_set = ""):
+    """
+    Generates diffusion matrix for single output
+    :param predictions:
+    :param labels:
+    :param plot_flg:
+    :param sub_set:
+    :return:
+    """
+    matrices = []
+
+    # single case
+    for i in range(1):
+        s = (np.shape(predictions)[-1], np.shape(predictions)[-1])
+        matrices.append(np.zeros(shape=s))
+    for pred, lab in zip(predictions, labels):
+        p = np.argmax(pred)
+        matrices[0][p][lab] += 1
+
+    if plot_flg:
+        for i in range(1):
+            plot_matrix(matrices[i],str(i)+"_"+sub_set+"_",get_cat_attributes_names())
+    return matrices
+
+
+def run_difusion_matrix(_model, _generator, name):
     print("Eval")
-    preds, labs = eval_model(model, generator.generate_validation())
-    return generate_dif_mat(preds,labs,False,"val")
-
-
-def run_difusion_matrix_train(model, generator):
-    preds, labs = eval_model(model, generator.generate_training())
-    return generate_dif_mat(preds, labs,False,"train")
-
-
-def run_difusion_matrix_test(model, generator):
-    preds, labs = eval_model(model, generator.generate_testing())
-    return generate_dif_mat(preds, labs,False,"tst")
+    preds, labs = eval_model(_model, _generator.generate_validation())
+    return generate_dif_mat(preds,labs,False,name)
 
 
 def run_difusion_matrix_single(model, generator, ind, name):
     preds, labs = eval_model_single_out(model, generator, ind)
-    return generate_dif_mat(preds, labs,False,name)
+    return generate_dif_mat_single(preds, labs,False,name)
 
 
-def test_model(model, generator):
+def test_model(_model, _generator):
     hist_tst = []
-    tst_gen = generator.generate_testing()
+    tst_gen = _generator.generate_testing()
     for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
-        hist_tst.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
+        hist_tst.append(_model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
     plot_history(prepare_eval_history(hist_tst), {}, 'Eval_testing', plot_flag=False,ser_flg=True,agg=False)
 
 
-def evaluate_all(model,generator):
-    matrices_dict = {'val': run_difusion_matrix_validation(model, generator),
-                     'train': run_difusion_matrix_train(model, generator),
-                     'test': run_difusion_matrix_test(model, generator)}
+def evaluate_all(_model, _generator):
+    matrices_dict = {'val': run_difusion_matrix(_model, _generator, "val"),
+                     'train': run_difusion_matrix(_model, _generator, "train"),
+                     'test': run_difusion_matrix(_model, _generator, "test")}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
-    test_model(model, generator)
+    test_model(_model, _generator)
 
 
-def evaluate_single(model,generator,ind):
-    matrices_dict = {'val': run_difusion_matrix_single(model, generator.generate_validation(),ind,"val"),
-                     'train': run_difusion_matrix_single(model, generator.generate_training(),ind,"train"),
-                     'test': run_difusion_matrix_single(model, generator.generate_testing(),ind,"tst")}
+def evaluate_single(_model, _generator, ind):
+    matrices_dict = {'val': run_difusion_matrix_single(_model, _generator.generate_validation(), ind, "val"),
+                     'train': run_difusion_matrix_single(_model, _generator.generate_training(), ind, "train"),
+                     'test': run_difusion_matrix_single(_model, _generator.generate_testing(), ind, "tst")}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
-    # test_model(model, generator)
 
 
 if __name__ == "__main__":
@@ -137,10 +137,15 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    model, dict_vars = load_model(model_path+"best_")
+    model, vars_dict = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
     generator = DataGeneratorOnLineSparse(resolution, bulk_size)
 
-    evaluate_all(model,generator)
-    # evaluate_single(model,generator,4)
+    BEST_LOSS = vars_dict["loss"]
+    BEST_EPOCH_IND = vars_dict["ep_ind"]
+    print("Evaluating model from epoch[", str(BEST_EPOCH_IND), "]", " with best loss: ", str(BEST_LOSS))
+
+
+    # evaluate_all(model,generator)
+    evaluate_single(model,generator,0)

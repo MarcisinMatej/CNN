@@ -133,48 +133,8 @@ class DataGeneratorOnLine(object):
                 img_labels = self.get_encoded_labels(names[i:i + self.chunk_size])
             yield images, img_labels
 
-    def generate_data_hidden(self, pict_ids):
-        """
-        Generates data with hiding attributes according to MASKs
-        :param pict_ids: ids of pictures
-        :return:
-        """
-        i = 0
-        while (i + self.chunk_size) < len(pict_ids):
-            if i/len(pict_ids) < 0.3 :
-                mask = MASKS[0]
-            elif i/len(pict_ids) < 0.6 :
-                mask = MASKS[1]
-            else:
-                mask = MASKS[2]
-
-            images, errs = self.get_images_online(pict_ids[i:i + self.chunk_size])
-            if len(errs) > 0:
-                img_labels = self.get_encoded_labels_h(
-                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs],
-                                                        mask)
-            else:
-                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size],
-                                                       mask)
-            i += self.chunk_size
-            yield images, img_labels
-
-        # yield the rest of images
-        if i < len(pict_ids):
-            images, errs = self.get_images_online(pict_ids[i:len(pict_ids)])
-            if len(errs) > 0:
-                print("ERROR reading images, removing name from labels")
-                img_labels = self.get_encoded_labels_h(
-                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs], mask)
-            else:
-                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size], mask)
-            yield images, img_labels
-
     def generate_training(self):
         return self.generate_data(self.train_ids)
-
-    def generate_training_masked(self):
-        return self.generate_data_hidden(self.train_ids)
 
     def generate_validation(self):
         return self.generate_data(self.validation_ids)

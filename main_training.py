@@ -7,7 +7,7 @@ from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
-bulk_size = 1024
+bulk_size = 10240
 model_path = 'models/'
 n_epochs = 100
 batch_size = 124
@@ -164,6 +164,24 @@ def run_model():
     """
     model = define_network_with_BN(in_shape=in_shape)
     opt = optimizers.Adam(lr=learning_rate)
+    model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
+
+    ep_hist_train = {}
+    ep_hist_val = {}
+    generator = DataGeneratorOnLine(resolution, bulk_size)
+    for e in range(n_epochs):
+        print("epoch %d" % e)
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validing epoch
+        validate_epoch(model, generator, e, ep_hist_val)
+
+def run_model_hidden():
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
+    model = define_network_with_BN(in_shape=in_shape)
+    opt = optimizers.Adam(lr=learning_rate)
     # model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     model.compile(optimizer=opt, loss=masked_loss_function, loss_weights=[1, 1, 1, 1, 1],
                   metrics=['accuracy'])
@@ -221,7 +239,7 @@ def run_load_model():
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     # model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     model.compile(optimizer=opt,loss=masked_loss_function, metrics=['accuracy'])
-    generator = DataGeneratorOnLineSparse(resolution, bulk_size)
+    generator = DataGeneratorOnLine(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
@@ -323,12 +341,13 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_model()
+    # run_model()
+    run_model_hidden()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
-    run_load_model()
+    # run_load_model()
     # run_load_model_virtual()
-    # run_model_with_single_out(1)
-    # run_load_model_single(1)
+    # run_model_with_single_out(0)
+    # run_load_model_single(0)

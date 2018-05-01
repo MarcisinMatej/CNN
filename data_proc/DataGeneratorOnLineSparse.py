@@ -95,4 +95,35 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
                 to_ret.append(-1)
         return to_ret
 
+    def generate_data(self, pict_ids):
+        """
+                Generates data with hiding attributes according to MASKs
+                :param pict_ids: ids of pictures
+                :return:
+                """
+        i = 0
+        tresh = 1 / len(MASKS)
+        while (i + self.chunk_size) < len(pict_ids):
+            mask_ind = int(np.math.floor((i / len(pict_ids)) / tresh))
+            mask = MASKS[mask_ind]
+            images, errs = self.get_images_online(pict_ids[i:i + self.chunk_size])
+            if len(errs) > 0:
+                img_labels = self.get_encoded_labels_h(
+                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs],
+                    mask)
+            else:
+                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size],
+                                                       mask)
+            i += self.chunk_size
+            yield images, img_labels
 
+        # yield the rest of images
+        if i < len(pict_ids):
+            images, errs = self.get_images_online(pict_ids[i:len(pict_ids)])
+            if len(errs) > 0:
+                print("ERROR reading images, removing name from labels")
+                img_labels = self.get_encoded_labels_h(
+                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs], mask)
+            else:
+                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size], mask)
+            yield images, img_labels
