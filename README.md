@@ -32,8 +32,9 @@ Show what the library does as concisely as possible, developers should be able t
 ## Installation
 After installing all required libararies mentioned in previous sections and cloning the project you should valiadate folder structure against this description. 
 Moreover in the git project there are not any databases with pictures from obvious reasons (size and compability). Therefore you should download image database of your desire, add corresponding configuration files. Before the first run of training model validate that you have required software installed by running:
-###
+
     python requirements.py    
+
 This script will validate required libraries and configuration. If everything will be checked and requirements met, you are done with instalation. 
 
 ### Folder structure
