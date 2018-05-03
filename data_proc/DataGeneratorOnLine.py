@@ -2,7 +2,7 @@ from keras.preprocessing import image
 
 from CNN import load_dictionary
 from data_proc.DataGenerator import data_folder
-from data_proc.DataLoader import load_folder_txts, load_attr_vals_txts, load_atributes_txts
+from data_proc.DataLoaderCelebA import load_folder_txts
 import numpy as np
 
 from data_proc.ImageParser import get_crop_resize
@@ -10,13 +10,6 @@ from data_proc.ImagePreProcess import load_crop_boxes
 
 LABEL_DICT_PATH = "data_proc/encoded_labels.npy"
 IMAGES_FOLDER = "data_proc/CelebA/img_align_celeba/"
-CHANCE = 0.25
-
-MASKS = [[True, False, False, False, False],
-         [False, True, False, False, False],
-         [False, False, True, False, False],
-         [False, False, False, True, False],
-         [False, False, False, False, True]]
 
 
 class DataGeneratorOnLine(object):
@@ -31,16 +24,8 @@ class DataGeneratorOnLine(object):
         'Initialization'
         self.img_shape = img_shape
         self.chunk_size = chunk_size
-        self.attr_vals = load_attr_vals_txts()
         self.attr_map = load_dictionary(LABEL_DICT_PATH)
         self.coord_dict = load_crop_boxes()
-        # count how many different attributes we will predict
-        self.attr_cnt = len(self.attr_vals)
-        self.attr_class_cnt = []
-        # count how many classes are in each label (length of one-hot true value vector)
-        for attr_val in self.attr_vals:
-            cnt = len(attr_val.split(":")[1].split(","))
-            self.attr_class_cnt.append(cnt)
         # split data to training,testing,validation
         self.train_ids = []
         self.test_ids = []

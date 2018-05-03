@@ -6,7 +6,7 @@ from keras.layers import Input, Flatten
 from keras.models import Model, model_from_json
 from keras.utils import plot_model
 
-from data_proc.DataLoader import get_attributes_desc, get_category_names
+from data_proc.DataLoaderCelebA import get_attributes_desc, get_category_names
 # from main_plots import _plot_model
 
 history_path = "histories/"

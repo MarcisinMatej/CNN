@@ -4,7 +4,7 @@ from CNN import load_dictionary
 from keras.preprocessing import image
 
 from data_proc.DataGenerator import data_folder
-from data_proc.DataLoader import  load_folder_txts, load_attr_vals_txts
+from data_proc.DataLoaderCelebA import  load_folder_txts, load_attr_vals_txts
 import numpy as np
 import random
 

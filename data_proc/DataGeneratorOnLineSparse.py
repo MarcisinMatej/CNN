@@ -1,7 +1,5 @@
-from keras.preprocessing import image
-
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
-from data_proc.DataLoader import load_attr_vals_txts, load_atributes_txts
+from data_proc.DataLoaderCelebA import load_attr_vals_txts, load_atributes_txts
 import numpy as np
 
 from data_proc.ImagePreProcess import load_crop_boxes
@@ -18,6 +16,11 @@ MASKS = [[True, False, False, False, False],
 
 
 def create_map(attr_vals):
+    """
+    Helper method for loading attributes values from file.
+    :param attr_vals: Raw data from file. List of string lines.
+    :return: dictionary {name_of_image:list_of_ints}
+    """
     _map = {}
     for attr_val in attr_vals:
         key = attr_val.split()[0].split("/")[-1]
@@ -38,16 +41,8 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
         'Initialization'
         self.img_shape = img_shape
         self.chunk_size = chunk_size
-        self.attr_vals = load_attr_vals_txts()
         self.sparse_attr_map = create_map(load_atributes_txts())
         self.coord_dict = load_crop_boxes()
-        # count how many different attributes we will predict
-        self.attr_cnt = len(self.attr_vals)
-        self.attr_class_cnt = []
-        # count how many classes are in each label (length of one-hot true value vector)
-        for attr_val in self.attr_vals:
-            cnt = len(attr_val.split(":")[1].split(","))
-            self.attr_class_cnt.append(cnt)
         # initialize and split data to training,testing,validation
         self.train_ids = []
         self.test_ids = []
@@ -101,29 +96,37 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
                 :param pict_ids: ids of pictures
                 :return:
                 """
-        i = 0
-        tresh = 1 / len(MASKS)
-        while (i + self.chunk_size) < len(pict_ids):
-            mask_ind = int(np.math.floor((i / len(pict_ids)) / tresh))
+        indx = 0
+        to = indx + self.chunk_size
+        threshold = 1 / len(MASKS)
+        while indx <= len(pict_ids):
+            # get mask proportional to numer of masks
+            stat = indx / len(pict_ids)
+            if stat < 0.2:
+                mask_ind = 0
+            elif stat < 0.4:
+                mask_ind = 1
+            elif stat < 0.6:
+                mask_ind = 2
+            elif stat < 0.8:
+                mask_ind = 3
+            else:
+                mask_ind = 4
             mask = MASKS[mask_ind]
-            images, errs = self.get_images_online(pict_ids[i:i + self.chunk_size])
+            images, errs = self.get_images_online(pict_ids[indx: to])
             if len(errs) > 0:
+                # get only labels for images which were correctly loade
                 img_labels = self.get_encoded_labels_h(
-                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs],
+                    [name for name in pict_ids[indx: to] if name not in errs],
                     mask)
             else:
-                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size],
+                img_labels = self.get_encoded_labels_h(pict_ids[indx: to],
                                                        mask)
-            i += self.chunk_size
-            yield images, img_labels
+            # get next boundaries
+            to += self.chunk_size
+            indx += self.chunk_size
+            if to != len(pict_ids) and (indx + self.chunk_size) > len(pict_ids):
+                # chunk increase overflow, we need to get the last chunk of data, which is smaller then defined
+                to = len(pict_ids)
 
-        # yield the rest of images
-        if i < len(pict_ids):
-            images, errs = self.get_images_online(pict_ids[i:len(pict_ids)])
-            if len(errs) > 0:
-                print("ERROR reading images, removing name from labels")
-                img_labels = self.get_encoded_labels_h(
-                    [name for name in pict_ids[i:i + self.chunk_size] if name not in errs], mask)
-            else:
-                img_labels = self.get_encoded_labels_h(pict_ids[i:i + self.chunk_size], mask)
             yield images, img_labels

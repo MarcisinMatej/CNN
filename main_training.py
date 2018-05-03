@@ -17,10 +17,10 @@ VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
 BEST_EPOCH_IND = 0
 # without BN
-learning_rate = 0.0000007
+LEARNING_RATE = 0.0000007
 # with BN
 # learning_rate = 0.0000007
-mask_value = -1
+MASK_VALUE = -1
 
 def _to_tensor(x, dtype):
     """Convert the input `x` to a tensor of type `dtype`.
@@ -54,13 +54,13 @@ from keras import backend as K
 
 def masked_accuracy(y_true, y_pred):
     dtype = K.floatx()
-    total = K.sum(K.cast(K.not_equal(y_true, mask_value), dtype))
+    total = K.sum(K.cast(K.not_equal(y_true, MASK_VALUE), dtype))
     correct = K.sum(K.cast(K.equal(y_true, K.round(y_pred)), dtype))
     return correct / total
 
 
 def masked_loss_function(target, output):
-    mask = K.cast(K.not_equal(target, mask_value), K.floatx())
+    mask = K.cast(K.not_equal(target, MASK_VALUE), K.floatx())
     return K.sparse_categorical_crossentropy(tf.multiply(target, mask), tf.multiply(output, mask))
 
 
@@ -116,6 +116,8 @@ def train_epoch_single(model, generator, ep_ind, ep_hist_train, out_index):
     """
     Procedure to train provided model with provide data from generator
     in single epoch. After training results are plotted with plot_history(...) function.
+    :param out_index: index of single output label from labels set
+    :param ep_hist_train:
     :param model:
     :param generator: yields through all training data
     :param ep_ind: index of epoch
@@ -132,7 +134,7 @@ def train_epoch_single(model, generator, ep_ind, ep_hist_train, out_index):
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
 
 
-def validate_epoch_single(model, generator, epoch_id,ep_hist_val, out_index):
+def validate_epoch_single(model, generator, epoch_id, ep_hist_val, out_index):
     """
     Procedure to validate provided model with provide data from generator
     in single epoch. After evaluation the result is plotted with plot_history(...) function.
@@ -153,9 +155,10 @@ def validate_epoch_single(model, generator, epoch_id,ep_hist_val, out_index):
 
     if agg < BEST_LOSS:
         print("!!!!!!!!!!!!!!!!!!  AGG LOSS IMPROVEMENT, now:" + str(BEST_LOSS) + ", new:" + str(agg))
-        save_model(model, model_path+"best_",epoch_id,BEST_LOSS,BEST_EPOCH_IND)
+        save_model(model, model_path+"best_", epoch_id, BEST_LOSS, BEST_EPOCH_IND)
         BEST_LOSS = agg
         BEST_EPOCH_IND = epoch_id
+
 
 def run_model():
     """
@@ -163,7 +166,7 @@ def run_model():
     :return:
     """
     model = define_network_with_BN(in_shape=in_shape)
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
 
     ep_hist_train = {}
@@ -175,13 +178,14 @@ def run_model():
         # Validing epoch
         validate_epoch(model, generator, e, ep_hist_val)
 
+
 def run_model_hidden():
     """
     Prepares fresh new model and network and runs it.
     :return:
     """
     model = define_network_with_BN(in_shape=in_shape)
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     # model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     model.compile(optimizer=opt, loss=masked_loss_function, loss_weights=[1, 1, 1, 1, 1],
                   metrics=['accuracy'])
@@ -200,7 +204,7 @@ def run_model_with_single_out(ind):
     :return:
     """
     model = define_network(in_shape=in_shape, single_output_ind=ind)
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
@@ -235,11 +239,11 @@ def run_load_model():
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     start_ep = vars_dict["epoch"] + 1
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
     # model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     model.compile(optimizer=opt,loss=masked_loss_function, metrics=['accuracy'])
-    generator = DataGeneratorOnLine(resolution, bulk_size)
+    generator = DataGeneratorOnLineSparse(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
     for e in range(start_ep,n_epochs):
@@ -263,9 +267,9 @@ def run_load_model_single(ind):
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     start_ep = vars_dict["epoch"] + 1
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     # model.compile(optimizer=rms, loss=["categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy", "categorical_crossentropy","categorical_crossentropy"], metrics=['accuracy'])
-    model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
     generator = DataGeneratorOnLine(resolution, bulk_size)
 
     print("Starting loaded model at epoch[",str(start_ep),"]"," with best loss: ", str(BEST_LOSS))
@@ -289,7 +293,7 @@ def run_load_model_virtual():
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     start_ep = vars_dict["epoch"] + 1
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
     generator = MyVirtualGenerator(resolution, bulk_size)
 
@@ -322,7 +326,7 @@ def run_model_virtual():
     :return:
     """
     model = define_network(in_shape=in_shape)
-    opt = optimizers.Adam(lr=learning_rate)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
     ep_hist_train = {}
     ep_hist_val = {}
@@ -330,7 +334,7 @@ def run_model_virtual():
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
-        # Validing epoch
+        # Validating epoch
         validate_epoch(model, generator, e, ep_hist_val)
 
 
@@ -342,12 +346,12 @@ if __name__ == "__main__":
     sess = tf.Session(config=config)
 
     # run_model()
-    run_model_hidden()
+    # run_model_hidden()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
-    # run_load_model()
+    run_load_model()
     # run_load_model_virtual()
     # run_model_with_single_out(0)
     # run_load_model_single(0)

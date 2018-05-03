@@ -3,10 +3,11 @@ import tensorflow as tf
 from keras import optimizers
 
 from CNN import load_model, save_dictionary
+from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
-from data_proc.DataLoader import get_cat_attributes_names
+from data_proc.DataLoaderCelebA import get_cat_attributes_names
 from main_plots import plot_history, prepare_eval_history, plot_matrix
-from main_training import batch_size, model_path, bulk_size, resolution, mask_value
+from main_training import batch_size, model_path, bulk_size, resolution, MASK_VALUE
 
 
 def eval_model(model, generator):
@@ -56,14 +57,13 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
 
     for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
         for pred, lab in zip(att_pred,att_lab):
-            if lab != mask_value:
+            # if lab != MASK_VALUE:
                 # categorical
-                p = np.argmax(pred)
-                # l = np.argmax(lab)
+            p = np.argmax(pred)
+            l = np.argmax(lab)
                 # matrices[i][p][l] += 1
-
                 # sparse
-                matrices[i][p][lab] += 1
+            matrices[i][p][l] += 1
 
     if plot_flg:
         for i in range(att_cnt):
@@ -140,12 +140,12 @@ if __name__ == "__main__":
     model, vars_dict = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGeneratorOnLineSparse(resolution, bulk_size)
+    generator = DataGeneratorOnLine(resolution, bulk_size)
 
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     print("Evaluating model from epoch[", str(BEST_EPOCH_IND), "]", " with best loss: ", str(BEST_LOSS))
 
 
-    # evaluate_all(model,generator)
-    evaluate_single(model,generator,0)
+    evaluate_all(model, generator)
+    # evaluate_single(model,generator,0)

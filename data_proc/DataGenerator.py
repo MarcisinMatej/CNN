@@ -4,7 +4,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.utils import np_utils
 
 from CNN import load_dictionary
-from data_proc.DataLoader import load_label_txts, load_folder_txts, load_attr_vals_txts
+from data_proc.DataLoaderCelebA import load_label_txts, load_folder_txts, load_attr_vals_txts
 
 data_folder = 'data_proc/data/'
 

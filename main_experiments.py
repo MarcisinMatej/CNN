@@ -9,7 +9,7 @@ from keras import optimizers
 
 from CNN import *
 from data_proc.DataGenerator import DataGenerator
-from data_proc.DataLoader import load_label_txts, load_folder_txts, get_cat_attributes_names
+from data_proc.DataLoaderCelebA import load_label_txts, load_folder_txts, get_cat_attributes_names
 
 bulk_size = 1024
 model_path = 'model/'

@@ -12,7 +12,7 @@ import glob
 import re
 import math
 
-from data_proc.DataLoader import get_cat_attributes_names, get_category_names
+from data_proc.DataLoaderCelebA import get_cat_attributes_names, get_category_names
 
 COLORS = {"Attract_acc":"g","Attract_loss":"g",
                 "Glass_acc":"r","Glass_loss":"r",
@@ -116,7 +116,7 @@ def plot_accuracy(data, epoch_ind):
     plt.close('all')
 
 
-def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_flg=True):
+def plot_history(history, agg_history, epoch_ind,plot_flag=False, agg=False, ser_flg=True):
     """
     Produces plot of loss and accuracy per epoch for validation and training data.
     Values are taken from history.
@@ -124,6 +124,9 @@ def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_f
     Contains values of metrics per bulk size
     :param agg_history: average metrics per epoch
     :param epoch_ind: index of epoch
+    :param ser_flg: Flag if the history should be serialized, default True
+    :param plot_flag: Flag if the history from the last epoch should be plotted, default False
+    :param agg: Flag if the aggregate history should be plotted, default False
     :return:
     """
     if plot_flag:
@@ -133,12 +136,12 @@ def plot_history(history, agg_history, epoch_ind,plot_flag=False,agg=False,ser_f
         plt.close('all')
     if agg:
         # plot avegare metrics thorugh all epochs
-        agg_history = merge_epoch_history(agg_history,history)
+        agg_history = merge_epoch_history(agg_history, history)
         plot_loss(agg_history, "aggregate")
         plot_accuracy(agg_history, "aggregate")
         plt.close('all')
     if ser_flg:
-        serialize_history(history,epoch_ind)
+        serialize_history(history, epoch_ind)
 
 
 def merge_history(histories):
@@ -292,7 +295,7 @@ def convert_to_percentage_mat(matrix):
         for col_i in range(len(matrix[row_i])):
             matrix[row_i][col_i] = matrix[row_i][col_i]/mat_sum*100
             # take lower part
-            round_matrix[row_i][col_i] = math.floor(matrix[row_i][col_i])
+            round_matrix[row_i][col_i] = math.floor(np.nan_to_num(matrix[row_i][col_i]))
             # leave just float part
             matrix[row_i][col_i] -= round_matrix[row_i][col_i]
 
@@ -323,7 +326,7 @@ def plot_diff_matrices(matrices, split_name):
 
 
 if __name__ == "__main__":
-    # plot_agg_epoch()
+    plot_agg_epoch()
     # #plot_all_epoch_hist()
     d_d = load_dictionary("diff_dict.npy")
     plot_diff_matrices(d_d['val'], "val")

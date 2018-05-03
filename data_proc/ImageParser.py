@@ -45,9 +45,15 @@ def get_crop_resize_virtualize(image_path, coords, mirror, rot_degree = 0, size=
     cords[3] = min(image_obj.size[1], coords[3])
     # if mirror:
     #     image_obj = image_obj.transpose(Image.FLIP_LEFT_RIGHT)
-    # image_obj.rotate(15, expand=True).crop(coords).resize(size, resample=Image.BILINEAR).save(
+    # image_obj.rotate(-10, expand=True).crop(cords).resize(size, resample=Image.BILINEAR).save(
     #     "virt_pict/ex_" + str(1) + ".jpg")
-    # image_obj.rotate(15, expand=False).crop(coords).resize(size, resample=Image.BILINEAR).save(
+    # image_obj.rotate(14, expand=True).crop(cords).resize(size, resample=Image.BILINEAR).save(
+    #     "virt_pict/ex_" + str(2) + ".jpg")
+    # image_obj.rotate(-10, expand=False).crop(cords).resize(size, resample=Image.BILINEAR).save(
+    #     "virt_pict/ex_" + str(3) + ".jpg")
+    # image_obj.crop(cords).resize(size, resample=Image.BILINEAR).save(
+    #     "virt_pict/ex_" + str(1) + ".jpg")
+    # image_obj.crop(cords).resize(size, resample=Image.BILINEAR).save(
     #     "virt_pict/ex_" + str(2) + ".jpg")
     if rot_degree != 0 and mirror:
         # Crop -> Rotate -> Resize -> Return

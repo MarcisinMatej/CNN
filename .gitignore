@@ -11,3 +11,4 @@ figures/*.png
 figures/lr_*
 confusions/test_*.png
 */confusions/test_*.png
+*.mp4
