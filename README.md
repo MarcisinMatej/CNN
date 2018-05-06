@@ -25,6 +25,10 @@ Include logo/demo screenshot etc.
 
 ## Features
 <b>Implemented features:</b>
+ - Training, validation and testing of CNN model with:
+ 	- Ploting aggregate values for specific metrices (Accuract, MSE, MAE)
+ 	- Visualization of results with diffusion matrices
+ 	- Computin average evaluation metrices from batch inter-results 
  - Single output model for CelebA dataset
  - Single output model for Wiki dataset
  - Multi-output model for CelebA dataset
@@ -32,7 +36,7 @@ Include logo/demo screenshot etc.
  - Multi-output model with hiding labels from CelebA dataset
  - Multi-output model for merged datasets CelebA and Wiki
  - Real-time demo on video stream with estimation of learned attributes
- 
+
 ## Code Example
 Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
 
