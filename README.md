@@ -24,8 +24,15 @@ Include logo/demo screenshot etc.
 
 
 ## Features
-What makes your project stand out?
-
+<b>Implemented features:</b>
+ - Single output model for CelebA dataset
+ - Single output model for Wiki dataset
+ - Multi-output model for CelebA dataset
+ - Multi-output model for Wiki dataset
+ - Multi-output model with hiding labels from CelebA dataset
+ - Multi-output model for merged datasets CelebA and Wiki
+ - Real-time demo on video stream with estimation of learned attributes
+ 
 ## Code Example
 Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
 
@@ -63,6 +70,8 @@ Let people know how they can contribute into your project. A [contributing guide
 
 
 README.md template thanks to [Akash Nimare](https://medium.com/@meakaakka/a-beginners-guide-to-writing-a-kickass-readme-7ac01da88ab3) 
+
+Rainer Lienhart, haarcascade_frontalface_default.xml
 
 #### Anything else that seems useful
 
