@@ -26,13 +26,19 @@ Include logo/demo screenshot etc.
 ## Features
 <b>Implemented features:</b>
  - Training, validation and testing of CNN model with:
- 	- Ploting aggregate values for specific metrices (Accuract, MSE, MAE)
+ 	- Ploting aggregate values for specific metrices (Accuracy, MSE, MAE)
  	- Visualization of results with diffusion matrices
- 	- Computin average evaluation metrices from batch inter-results 
- - Single output model for CelebA dataset
- - Single output model for Wiki dataset
- - Multi-output model for CelebA dataset
- - Multi-output model for Wiki dataset
+ 	- Computing average evaluation error (per metric) from batch inter-results 
+ - Model specification
+ 	- Linear architecture model 
+ 	- Model with BN
+ 	- Branching architecture model
+ - Single output model for:
+ 	- CelebA dataset
+ 	- Wiki dataset
+ - Multi-output model for:
+ 	- CelebA dataset
+ 	- Wiki dataset
  - Multi-output model with hiding labels from CelebA dataset
  - Multi-output model for merged datasets CelebA and Wiki
  - Real-time demo on video stream with estimation of learned attributes
