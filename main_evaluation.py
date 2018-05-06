@@ -5,6 +5,7 @@ from keras import optimizers
 from CNN import load_model, save_dictionary
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
+from data_proc.DataGeneratorWiki import DataGeneratorWiki
 from data_proc.DataLoaderCelebA import get_cat_attributes_names
 from main_plots import plot_history, prepare_eval_history, plot_matrix
 from main_training import batch_size, model_path, bulk_size, resolution, MASK_VALUE
@@ -60,7 +61,8 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
             # if lab != MASK_VALUE:
                 # categorical
             p = np.argmax(pred)
-            l = np.argmax(lab)
+            # l = np.argmax(lab)
+            l = lab
                 # matrices[i][p][l] += 1
                 # sparse
             matrices[i][p][l] += 1
@@ -107,12 +109,46 @@ def run_difusion_matrix_single(model, generator, ind, name):
     return generate_dif_mat_single(preds, labs,False,name)
 
 
-def test_model(_model, _generator):
-    hist_tst = []
+def eval_model_metrices(_model, _generator):
+    print("TRAIN")
+    res_train = None
+    res_tst = None
+    res_val = None
+    cnt = 0
+    tst_gen = _generator.generate_training()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        tmp = model.evaluate(x=X_train, y=Y_train, batch_size=batch_size, verbose=1)
+        if res_train == None:
+            res_train = tmp
+        else:
+            res_train = [i+j for i,j in zip(res_train,tmp)]
+        cnt += 1
+    for res, name in zip(res_train,model.metrics_names ):
+        print(name, ": ", str(res/cnt))
+    print("TEST")
+    cnt = 0
     tst_gen = _generator.generate_testing()
     for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
-        hist_tst.append(_model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
-    plot_history(prepare_eval_history(hist_tst), {}, 'Eval_testing', plot_flag=False,ser_flg=True,agg=False)
+        tmp = model.evaluate(x=X_train, y=Y_train, batch_size=batch_size, verbose=1)
+        if res_tst == None:
+            res_tst = tmp
+        else:
+            res_tst = [i + j for i, j in zip(res_tst, tmp)]
+        cnt += 1
+    for res, name in zip(res_tst, model.metrics_names):
+        print(name, ": ", str(res / cnt))
+    print("VAL")
+    cnt = 0
+    tst_gen = _generator.generate_validation()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        tmp = model.evaluate(x=X_train, y=Y_train, batch_size=batch_size, verbose=1)
+        if res_val == None:
+            res_val = tmp
+        else:
+            res_val = [i + j for i, j in zip(res_val, tmp)]
+        cnt += 1
+    for res, name in zip(res_val, model.metrics_names):
+        print(name, ": ", str(res / cnt))
 
 
 def evaluate_all(_model, _generator):
@@ -120,7 +156,6 @@ def evaluate_all(_model, _generator):
                      'train': run_difusion_matrix(_model, _generator, "train"),
                      'test': run_difusion_matrix(_model, _generator, "test")}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
-    test_model(_model, _generator)
 
 
 def evaluate_single(_model, _generator, ind):
@@ -139,8 +174,8 @@ if __name__ == "__main__":
 
     model, vars_dict = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
-    model.compile(optimizer=opt, loss="categorical_crossentropy", metrics=['accuracy'])
-    generator = DataGeneratorOnLine(resolution, bulk_size)
+    model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy', 'mse', 'mae'])
+    generator = DataGeneratorWiki(resolution, bulk_size)
 
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
@@ -149,3 +184,4 @@ if __name__ == "__main__":
 
     evaluate_all(model, generator)
     # evaluate_single(model,generator,0)
+    eval_model_metrices(model, generator)

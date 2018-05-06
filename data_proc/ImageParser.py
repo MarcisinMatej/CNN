@@ -89,3 +89,10 @@ def get_crop_resize(image_path, coords, size=(100, 100)):
     cords[2] = min(image_obj.size[0], coords[2])
     cords[3] = min(image_obj.size[1], coords[3])
     return image_obj.crop(cords).resize(size, resample=Image.BILINEAR)
+
+
+def get_image(image_path, size=(100, 100)):
+    image_obj = Image.open(image_path)
+    if image_obj.mode != "RGB" or image_obj.width == 1:
+        raise Exception('Picture is not in RGB mode or too small!')
+    return image_obj.resize(size, resample=Image.BILINEAR)

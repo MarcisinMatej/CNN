@@ -1,13 +1,16 @@
 import tensorflow as tf
 from keras import optimizers
 
-from CNN import save_model, load_model, define_network_with_BN, define_network
+from CNN import save_model, load_model, define_network_with_BN, define_network, define_network_wiki, \
+    define_network_merged
+from data_proc.DataGeneratorMerged import DataGeneratorMerged
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
+from data_proc.DataGeneratorWiki import DataGeneratorWiki
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
-bulk_size = 10240
+bulk_size = 1024
 model_path = 'models/'
 n_epochs = 100
 batch_size = 124
@@ -172,6 +175,44 @@ def run_model():
     ep_hist_train = {}
     ep_hist_val = {}
     generator = DataGeneratorOnLine(resolution, bulk_size)
+    for e in range(n_epochs):
+        print("epoch %d" % e)
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validing epoch
+        validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_model_wiki():
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
+    model = define_network_wiki(in_shape=in_shape)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
+    model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy", metrics=['accuracy','mae'])
+
+    ep_hist_train = {}
+    ep_hist_val = {}
+    generator = DataGeneratorWiki(resolution, bulk_size)
+    for e in range(n_epochs):
+        print("epoch %d" % e)
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validing epoch
+        validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_model_merged():
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
+    model = define_network_merged(in_shape=in_shape)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
+    model.compile(optimizer=opt, loss=masked_loss_function, metrics=['accuracy'])
+
+    ep_hist_train = {}
+    ep_hist_val = {}
+    generator = DataGeneratorMerged(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
@@ -351,7 +392,9 @@ if __name__ == "__main__":
     # RunLoadedModelWithGenerators()
     # path="histories/0epoch_train_hist.npy"
     # print(load_history(path))
-    run_load_model()
+    # run_load_model()
     # run_load_model_virtual()
     # run_model_with_single_out(0)
     # run_load_model_single(0)
+    # run_model_wiki()
+    run_model_merged()
