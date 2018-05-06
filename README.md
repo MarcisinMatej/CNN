@@ -58,12 +58,13 @@ This script will validate required libraries and configuration. If everything wi
 
     .   						# CNN - Main directory
     ├── data_proc               # Scripts responsible for pre processing of data, loading data, etc..
-    │    ├── config_files       # Configuration files like attributes labels, description files, etc...
+    │    ├── config_files       # Configuration files e.g. attributes labels, description files, etc...
     │    └── data               # Parent directory for databases
     │         └── celebA        # Database with celebA dataset
-    ├── figures				    # Parent folder for all graphs and plots like history plots
+    │         └── wiki_crop     # Database with wiki dataset
+    ├── figures				    # Parent folder for all graphs and plots e.g. history plots
     │	   └── confusions 		# Folder for confusion matrices with error rates
-    └── model					# Saved model from the last epoch and the best achieved validation error model
+    └── models					# Saved model from the last epoch and the best achieved validation error model
 
 
 ## Tests
