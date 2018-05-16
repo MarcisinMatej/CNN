@@ -5,14 +5,14 @@ from keras.preprocessing import image
 import numpy as np
 
 IMAGES_FOLDER = "data_proc/data/wiki_crop/"
-CONF_FILE = "wiki_cat_merged.txt"
+CONF_FILE = "wiki_cat.txt"
 
 def load_config_wiki_age():
     train = []
     val = []
     test = []
     tmp = {}
-    with open("data_proc/config_files/wiki_conf.txt") as f:
+    with open("data_proc/config_files/"+CONF_FILE) as f:
         lines = f.readlines()
         for line in lines:
             age = int(line.split(",")[2])
@@ -63,6 +63,7 @@ class DataGeneratorWiki(DataGeneratorOnLine):
         self.attr_cnt = len(self.attr_vals)
         # split data to training,testing,validation
         self.train_ids, self.validation_ids, self.test_ids, self.attr_map = load_config_wiki(CONF_FILE)
+        print("-- Generator Wiki initialized.")
 
     def get_images_online(self, img_names):
         """

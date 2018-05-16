@@ -23,7 +23,7 @@ def load_label_txts():
         attrs = file_attrs.readlines()
     attr_map = {}
     for attr in attrs:
-        attr_map[attr.split()[0].split("/")[-1]] = attr.split()[1:]
+        attr_map[attr.split()[0].split("/")[-1]] = [i -1 for i in list(map(int, attr.split()[1:]))]
     return attr_vals, attr_map
 
 

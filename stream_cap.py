@@ -100,6 +100,7 @@ if __name__ == "__main__":
     face_names = []
     frame_number = 0
     face_size = 100
+    # labels = ["a", "b", "c", "d", "e"]
 
     current_path = os.getcwd()
 

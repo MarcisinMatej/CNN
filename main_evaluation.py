@@ -3,6 +3,8 @@ import tensorflow as tf
 from keras import optimizers
 
 from CNN import load_model, save_dictionary
+from data_proc.DataGeneratorIMDB import DataGeneratorIMDB
+from data_proc.DataGeneratorMerged import DataGeneratorMerged
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
 from data_proc.DataGeneratorWiki import DataGeneratorWiki
@@ -10,6 +12,9 @@ from data_proc.DataLoaderCelebA import get_cat_attributes_names
 from main_plots import plot_history, prepare_eval_history, plot_matrix
 from main_training import batch_size, model_path, bulk_size, resolution, MASK_VALUE
 
+TR_NAME = "test"
+VAL_NAME = "val"
+TST_NAME = "test"
 
 def eval_model(model, generator):
     predictions = []
@@ -24,7 +29,7 @@ def eval_model(model, generator):
         res = model.predict(X_data, batch_size=batch_size)
         print("pls")
         #todo make dynamic
-        for i in range(5):
+        for i in range(len(model.outputs)):
             predictions[i] = np.concatenate((predictions[i], res[i]), axis=0)
             labels[i] = np.concatenate((labels[i], Y_data[i]), axis=0)
     return predictions, labels
@@ -58,14 +63,14 @@ def generate_dif_mat(predictions, labels, plot_flg=False,sub_set = ""):
 
     for att_pred, att_lab,i in zip(predictions, labels, range(att_cnt)):
         for pred, lab in zip(att_pred,att_lab):
-            # if lab != MASK_VALUE:
+            if lab != MASK_VALUE:
                 # categorical
-            p = np.argmax(pred)
-            # l = np.argmax(lab)
-            l = lab
-                # matrices[i][p][l] += 1
-                # sparse
-            matrices[i][p][l] += 1
+                p = np.argmax(pred)
+                # l = np.argmax(lab)
+                l = lab
+                    # matrices[i][p][l] += 1
+                    # sparse
+                matrices[i][p][l] += 1
 
     if plot_flg:
         for i in range(att_cnt):
@@ -99,9 +104,14 @@ def generate_dif_mat_single(predictions, labels, plot_flg=False,sub_set = ""):
 
 
 def run_difusion_matrix(_model, _generator, name):
-    print("Eval")
-    preds, labs = eval_model(_model, _generator.generate_validation())
-    return generate_dif_mat(preds,labs,False,name)
+    print(name)
+    if name == TR_NAME:
+        preds, labs = eval_model(_model, _generator.generate_training())
+    if name == VAL_NAME:
+        preds, labs = eval_model(_model, _generator.generate_validation())
+    if name == TST_NAME:
+        preds, labs = eval_model(_model, _generator.generate_testing())
+    return generate_dif_mat(preds, labs, False, name)
 
 
 def run_difusion_matrix_single(model, generator, ind, name):
@@ -152,16 +162,16 @@ def eval_model_metrices(_model, _generator):
 
 
 def evaluate_all(_model, _generator):
-    matrices_dict = {'val': run_difusion_matrix(_model, _generator, "val"),
-                     'train': run_difusion_matrix(_model, _generator, "train"),
-                     'test': run_difusion_matrix(_model, _generator, "test")}
+    matrices_dict = {'val': run_difusion_matrix(_model, _generator, VAL_NAME),
+                     'train': run_difusion_matrix(_model, _generator, TR_NAME),
+                     'test': run_difusion_matrix(_model, _generator, TST_NAME)}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
 
 
 def evaluate_single(_model, _generator, ind):
-    matrices_dict = {'val': run_difusion_matrix_single(_model, _generator.generate_validation(), ind, "val"),
-                     'train': run_difusion_matrix_single(_model, _generator.generate_training(), ind, "train"),
-                     'test': run_difusion_matrix_single(_model, _generator.generate_testing(), ind, "tst")}
+    matrices_dict = {'val': run_difusion_matrix_single(_model, _generator.generate_validation(), ind, VAL_NAME),
+                     'train': run_difusion_matrix_single(_model, _generator.generate_training(), ind, TR_NAME),
+                     'test': run_difusion_matrix_single(_model, _generator.generate_testing(), ind, TST_NAME)}
     save_dictionary(path_loc="diff_dict", dict=matrices_dict)
 
 
@@ -174,8 +184,9 @@ if __name__ == "__main__":
 
     model, vars_dict = load_model(model_path+"best_")
     opt = optimizers.Adam(lr=0.0000015)
-    model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy', 'mse', 'mae'])
-    generator = DataGeneratorWiki(resolution, bulk_size)
+    model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy'])
+    # generator = DataGeneratorWiki(resolution, bulk_size)
+    generator = DataGeneratorIMDB(resolution, bulk_size)
 
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]

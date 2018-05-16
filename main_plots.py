@@ -249,6 +249,8 @@ def recode_category_names(mydict):
     new_dict = {}
     print(mydict.keys())
     for old_key in mydict.keys():
+        if old_key not in tmp_solution.keys():
+            continue
         new_key = tmp_solution[old_key]
         new_dict[new_key] = mydict[old_key]
     return new_dict
@@ -321,14 +323,69 @@ def plot_diff_matrices(matrices, split_name):
     """
     names = get_cat_attributes_names()
     categories = get_category_names()
+    for matrix,alpha,cat in zip(matrices, names, categories):
+        plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
+
+def plot_diff_matrices_m(matrices, split_name):
+    """
+    Plots percentage diffusion matrices and saves them as .png files
+    into figures/confusion folder
+    :param matrices:
+    :param split_name: train/test/validation, it will be used as prefix
+    for saved images
+    :return:
+    """
+    names = get_cat_attributes_names()
+    categories = get_category_names()
+    names.append(["Adolescent", "Adult", "Middle aged", "Retired", "Old"])
+    categories.append("Age")
+    for matrix,alpha,cat in zip(matrices,names,categories):
+        plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
+
+def plot_diff_matrices_imdb(matrices, split_name):
+    """
+    Plots percentage diffusion matrices and saves them as .png files
+    into figures/confusion folder
+    :param matrices:
+    :param split_name: train/test/validation, it will be used as prefix
+    for saved images
+    :return:
+    """
+    names = [["Male","Female"], [str(i) for i  in range(6)]]
+    categories = ["Gender", "Age_cat"]
+    for matrix,alpha,cat in zip(matrices,names,categories):
+        plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
+
+def plot_diff_matrices_wiki(matrices, split_name):
+    """
+    Plots percentage diffusion matrices and saves them as .png files
+    into figures/confusion folder
+    :param matrices:
+    :param split_name: train/test/validation, it will be used as prefix
+    for saved images
+    :return:
+    """
+    names = [["Male","Female"],["Adolescent", "Adult", "Middle aged", "Retired", "Old"]]
+    categories = ["Gender", "Age"]
     for matrix,alpha,cat in zip(matrices,names,categories):
         plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
 
 
 if __name__ == "__main__":
-    plot_agg_epoch()
+    # plot_agg_epoch()
     # #plot_all_epoch_hist()
     d_d = load_dictionary("diff_dict.npy")
-    plot_diff_matrices(d_d['val'], "val")
-    plot_diff_matrices(d_d['train'], "train")
-    plot_diff_matrices(d_d['test'], "test")
+    # plot_diff_matrices(d_d['val'], "val")
+    # plot_diff_matrices(d_d['train'], "train")
+    # plot_diff_matrices(d_d['test'], "test")
+    # plot_diff_matrices_wiki(d_d['val'], "val")
+    # plot_diff_matrices_wiki(d_d['train'], "train")
+    # plot_diff_matrices_wiki(d_d['test'], "test")
+
+    plot_diff_matrices_m(d_d['val'], "val")
+    plot_diff_matrices_m(d_d['train'], "train")
+    plot_diff_matrices_m(d_d['test'], "test")
+
+    plot_diff_matrices_imdb(d_d['val'], "val")
+    plot_diff_matrices_imdb(d_d['train'], "train")
+    plot_diff_matrices_imdb(d_d['test'], "test")

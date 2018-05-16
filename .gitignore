@@ -12,3 +12,8 @@ figures/lr_*
 confusions/test_*.png
 */confusions/test_*.png
 *.mp4
+*.csv
+*.mat
+tmp.py
+mat_csv.py
+data_proc/config_files/*

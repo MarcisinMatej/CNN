@@ -8,14 +8,21 @@ from collections import Counter
 from keras import optimizers
 
 from CNN import *
+from data_proc import DataGeneratorOnLine
 from data_proc.DataGenerator import DataGenerator
+from data_proc.DataGeneratorWiki import load_config_wiki, CONF_FILE
 from data_proc.DataLoaderCelebA import load_label_txts, load_folder_txts, get_cat_attributes_names
+import matplotlib.pyplot as plt
+
+from data_proc.ImageParser import crop_resize
 
 bulk_size = 1024
 model_path = 'model/'
 n_epochs = 250
 batch_size = 32
 in_shape = (64, 64, 3)
+
+colors = ['#b5ffb9', "#f9bc86", "#a3acff", "red", "blue"]
 
 def bulk_time_test():
     sizes = [32,128,256,512,1024,2048,4096,8192]
@@ -30,7 +37,6 @@ def bulk_time_test():
         end = datetime.datetime.now()
         delta = end - start
         res.append(int(delta.total_seconds() * 1000))
-    import matplotlib.pyplot as plt
     plt.plot(range(len(sizes)),res,'ro')
     plt.xticks(range(len(sizes)), sizes)
     plt.show()
@@ -85,7 +91,6 @@ def count_freq(data,cnt):
         print(freq_dict[-1])
 
     print("Sum:" + str(s))
-    count_gender_attractivenes(data)
     return freq_dict
 
 def count_gender_attractivenes(data):
@@ -103,7 +108,131 @@ def count_gender_attractivenes(data):
     print("Unttractive female: ", un_fem_cnt / un_cnt * 100)
 
 
-def RunDataStats():
+def plot_wiki_splits(data, cnt):
+    import matplotlib.pyplot as plt
+    r = [0, 1, 2]
+
+    bottoms = [0, 0, 0]
+    barWidth = 0.5
+    for i in range(cnt):
+        # plot
+        # Create green Bars
+        plt.bar(r, data[i], bottom=bottoms, color=colors[i], edgecolor='white', width=barWidth)
+        # Create orange Bars
+        bottoms = [i + j for i, j in zip(bottoms,data[i])]
+
+    # Custom x axis
+    names = ("train", "val", "test")
+    plt.xticks(r, names)
+    plt.xlabel("group")
+
+    # Show graphic
+    plt.show()
+
+
+def wiki_age_plot():
+    plt.rcParams.update({'font.size': 20})
+    age_arr = []
+    with open("data_proc/config_files/wiki_conf.txt") as f:
+        lines = f.readlines()
+        for line in lines:
+            age = int(line.split(",")[2])
+            if age < 0 or age > 100:
+                continue
+            age_arr.append(age)
+
+    n_bins = 50
+    fig, axs = plt.subplots(1, 1, sharey=True, tight_layout=True)
+
+    # We can set the number of bins with the `bins` kwarg
+    axs.hist(age_arr, bins=n_bins)
+
+    plt.show()
+
+
+def imdb_age_plot():
+    age_arr = []
+
+    with open("data_proc/config_files/imdb.txt", encoding="utf8") as f:
+        lines = f.readlines()
+        for line in lines:
+            arr = line.split("\t")
+            age_arr.append(int(arr[6]))
+
+    n_bins = 60
+    fig, axs = plt.subplots(1, 1, sharey=True, tight_layout=True)
+
+    # We can set the number of bins with the `bins` kwarg
+    axs.hist(age_arr, bins=n_bins,color=colors[4])
+    plt.show()
+
+def imdb_cat_age_plot():
+    age_arr = []
+
+    with open("data_proc/config_files/imdb.txt", encoding="utf8") as f:
+        lines = f.readlines()
+        for line in lines:
+            arr = line.split("\t")
+            # age_arr.append(int(arr[6]))
+            if int(arr[6]) < 22:
+                age_arr.append(1)
+            elif int(arr[6]) < 30:
+                age_arr.append(2)
+            elif int(arr[6]) < 40:
+                age_arr.append(3)
+            elif int(arr[6]) < 50:
+                age_arr.append(4)
+            elif int(arr[6]) < 60:
+                age_arr.append(5)
+            else:
+                age_arr.append(6)
+
+    n_bins = 6
+    fig, axs = plt.subplots(1, 1, sharey=True, tight_layout=True)
+    # We can set the number of bins with the `bins` kwarg
+    axs.hist(age_arr, bins=n_bins, color=colors[4])
+    plt.show()
+
+def reformat_data(tr_f, data_gen, data_age):
+    for dict_val in tr_f:
+        if len(dict_val.keys()) == 2:
+            data_gen[0].append(float(dict_val[0]))
+            data_gen[1].append(float(dict_val[1]))
+        else:
+            for i in range(5):
+                data_age[i].append(float(dict_val[i]))
+
+
+def RunDataStatsWiki():
+    tr, val, tst, attr_map = load_config_wiki(CONF_FILE)
+
+    train = []
+    valid = []
+    test = []
+    for key in tr:
+        train.append(attr_map[key])
+    for key in val:
+        valid.append(attr_map[key])
+    for key in tst:
+        test.append(attr_map[key])
+
+    print("TRAIN")
+    freq_dict = count_freq(np.asarray(train), 2)
+    data_gen = [[],[]]
+    data_age = [[],[],[],[],[]]
+    reformat_data(freq_dict,data_gen,data_age)
+    print("VALIDATION")
+    freq_dict = count_freq(np.asarray(valid), 2)
+    reformat_data(freq_dict, data_gen, data_age)
+    print("TEST")
+    freq_dict = count_freq(np.asarray(test), 2)
+    reformat_data(freq_dict, data_gen, data_age)
+
+    plot_wiki_splits(data_age, 5)
+    plot_wiki_splits(data_gen, 2)
+
+
+def RunDataStatsCelebA():
     attr_vals, lbs_map = load_label_txts()
     train = []
     valid = []
@@ -124,6 +253,10 @@ def RunDataStats():
     count_freq(np.asarray(valid), len(attr_vals))
     print("TEST")
     count_freq(np.asarray(test), len(attr_vals))
+
+    count_gender_attractivenes(train)
+    count_gender_attractivenes(valid)
+    count_gender_attractivenes(test)
 
 
 def convert_to_percentage_mat(matrix):
@@ -153,7 +286,33 @@ def run_err_stats():
         for matrix, alpha in zip(d_d[key], alphas):
             print_errs(convert_to_percentage_mat(matrix), alpha)
 
+def expand_coords(coords):
+    """
+    Expands coordinates by 25%
+    :param coords:
+    :return:
+    """
+    sc_coords = []
+    # increase/decrease by scale, then increase borders to each direction by 25 %, convert to int
+    sc_coords.append(int((coords[0]) * 0.75))
+    sc_coords.append(int((coords[1]) * 0.75))
+    sc_coords.append(int((coords[2]) * 1.25))
+    sc_coords.append(int((coords[3]) * 1.25))
+    return sc_coords
 
+def prepare_crop_imdb():
+    folder_imdb = "/datagrid/personal/marcisin/"
+    with open("data_proc/config_files/imdb.txt", encoding="utf8") as f:
+        lines = f.readlines()
+        for line in lines:
+            arr = line.split("\t")
+            path = folder_imdb + arr[0]
+            coords = expand_coords(list(map(int, arr[2:6])))
+            saved_location = "data_proc/data/imdb/" + arr[0]
+            try:
+                crop_resize(path, coords, saved_location, (100, 100))
+            except Exception as e:
+                print(str(e))
 
 if __name__ == "__main__":
     # issue with memory, in default tensorflow allocates nearly all possible memory
@@ -163,6 +322,10 @@ if __name__ == "__main__":
     # sess = tf.Session(config=config)
 
     #RunModelBatchTest()
-
-    # RunDataStats()
-    run_err_stats()
+    # RunDataStatsCelebA()
+    # RunDataStatsWiki()
+    # run_err_stats()
+    # wiki_age_plot()
+    # imdb_age_plot()
+    # prepare_crop_imdb()
+    imdb_cat_age_plot()

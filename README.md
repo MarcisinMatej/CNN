@@ -5,7 +5,7 @@ A convolutional neural network for estimating multiple face attributes from imag
 This project was developed as assignment for master thesis. The main goal is to develop and evaluate capabilities of deep learning, 
 specifically convolution neural network, for estimating multiple attributes from faces while learning on incomplete data. The main motivation
 behind this project is to evaluate possibility of learning such a model from different data sources which have different anotation labels and consequently
-be able to predict all attributes on new examples even though the model was not provide with any fully anotated examples.
+be able to predict all attributes on new examples even though the model was not provide with any fully anotated examples. Final goal is to use this learned model for real time features estimation from video stream.
 
 ## Code style
 
@@ -72,6 +72,12 @@ Describe and show how to run the tests with code examples.
 
 ## How to use?
 If people like your project they’ll want to learn how they can use it. To do so include step by step guide to use your project.
+
+	$ python requirements.py 					# chcek if required libraries are installed and properly configured
+	$ python main_training.py 					# train model
+	$ python main_evaluation.py 				# evaluate trained model
+	$ python main_plots.py 						# produce training history plots and confusion matrices
+	$ python stream_cap.py 						# run live demo
 
 ## Contribute
 

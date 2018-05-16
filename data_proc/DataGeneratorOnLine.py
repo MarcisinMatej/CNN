@@ -2,7 +2,7 @@ from keras.preprocessing import image
 
 from CNN import load_dictionary
 from data_proc.DataGenerator import data_folder
-from data_proc.DataLoaderCelebA import load_folder_txts
+from data_proc.DataLoaderCelebA import load_folder_txts, load_label_txts
 import numpy as np
 
 from data_proc.ImageParser import get_crop_resize
@@ -24,13 +24,15 @@ class DataGeneratorOnLine(object):
         'Initialization'
         self.img_shape = img_shape
         self.chunk_size = chunk_size
-        self.attr_map = load_dictionary(LABEL_DICT_PATH)
+        # self.attr_map = load_dictionary(LABEL_DICT_PATH)
+        attr_desc, self.attr_map = load_label_txts()
         self.coord_dict = load_crop_boxes()
+        self.prepare_coord_expansion()
         # split data to training,testing,validation
         self.train_ids = []
         self.test_ids = []
         self.validation_ids = []
-
+        self.img_source = IMAGES_FOLDER
         self.find_split_ids()
 
     def find_split_ids(self):
@@ -183,17 +185,22 @@ class DataGeneratorOnLine(object):
         errs = []
         for img_name in img_names:
             try:
-                path = IMAGES_FOLDER + img_name
+                path = self.img_source + img_name
                 # print(path)
                 img = get_crop_resize(path,
-                                      self.expand_coords(self.coord_dict[img_name]),
+                                      self.coord_dict[img_name],
                                       self.img_shape)
                 x = image.img_to_array(img)
                 x = np.expand_dims(x, axis=0)
                 images.append(x)
             except Exception as e:
-                print(str(e))
+                # print(str(e))
                 errs.append(img_name)
 
+        print("-- Failed to load ", str(len(errs)), " images.")
         return np.vstack(images), errs
+
+    def prepare_coord_expansion(self):
+        for key in self.coord_dict.keys():
+            self.coord_dict[key] = self.expand_coords(self.coord_dict[key])
 

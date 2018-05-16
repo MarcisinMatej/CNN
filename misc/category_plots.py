@@ -106,9 +106,47 @@ def plot_cat_bars_5():
 
     plt.show()
 
+
+def plot_all_errors():
+    # libraries
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    # set width of bar
+    barWidth = 0.2
+
+    # set height of bar
+    errs_single = [22, 1, 3, 8, 33]
+    errs_multi = [22, 1, 4, 9, 35]
+    errs_hum = [30, 1, 2, 15, 51]
+    errs_rand = [48, 7, 43, 48, 62]
+
+    # Set position of bar on X axis
+    r1 = np.arange(len(errs_single))
+    r2 = [x + barWidth for x in r1]
+    r3 = [x + barWidth for x in r2]
+    r4 = [x + barWidth for x in r3]
+
+    # Make the plot
+    plt.bar(r1, errs_single, color='#ef7161', width=barWidth, edgecolor='white', label='single')
+    plt.bar(r2, errs_multi, color='#2f4858', width=barWidth, edgecolor='white', label='multi')
+    plt.bar(r3, errs_hum, color='#a06cd5', width=barWidth, edgecolor='white', label='human')
+    plt.bar(r4, errs_rand, color='#32965d', width=barWidth, edgecolor='white', label='random')
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('group', fontweight='bold')
+    plt.xticks([r + barWidth for r in range(len(errs_single))], ['Attractive', 'Glass', 'Gender', 'Smile', 'Hair'])
+
+    # Create legend & Show graphic
+    plt.legend()
+    plt.show()
+
+
 if __name__ == "__main__":
-    plot_cat_bars_1()
-    plot_cat_bars_2()
-    plot_cat_bars_3()
-    plot_cat_bars_4()
-    plot_cat_bars_5()
+    # plot_cat_bars_1()
+    # plot_cat_bars_2()
+    # plot_cat_bars_3()
+    # plot_cat_bars_4()
+    # plot_cat_bars_5()
+
+    plot_all_errors()

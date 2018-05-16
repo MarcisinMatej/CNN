@@ -1,4 +1,5 @@
 from PIL import Image
+from PIL import ImageFile
 
 def crop(image_path, coords, saved_location):
     """
@@ -18,9 +19,10 @@ def crop_resize(image_path, coords, saved_location, size=(32,32)):
     @param coords: A tuple of x/y coordinates (x1, y1, x2, y2)
     @param saved_location: Path to save the cropped image
     """
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     image_obj = Image.open(image_path)
     cropped_image = image_obj.crop(coords)
-    resized_image = cropped_image.resize(size, resample=0)
+    resized_image = cropped_image.resize(size, resample=Image.BILINEAR)
     resized_image.save(saved_location)
     # cropped_image.show()
 
@@ -93,6 +95,18 @@ def get_crop_resize(image_path, coords, size=(100, 100)):
 
 def get_image(image_path, size=(100, 100)):
     image_obj = Image.open(image_path)
+    image_obj.load()
     if image_obj.mode != "RGB" or image_obj.width == 1:
         raise Exception('Picture is not in RGB mode or too small!')
     return image_obj.resize(size, resample=Image.BILINEAR)
+
+
+def invalid_img(image_path):
+    """
+    Checks if image is valid for inputing into model
+    :param image_path:
+    :return:
+    """
+    image_obj = Image.open(image_path)
+    image_obj.load()
+    return image_obj.mode != "RGB" or image_obj.width < 10

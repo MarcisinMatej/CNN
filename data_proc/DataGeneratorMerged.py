@@ -13,6 +13,21 @@ IMAGES_FOLDER_CELEB = "data_proc/data/celebA/"
 CONF_FILE_WIKI = "wiki_cat_merged.txt"
 
 
+def create_map_m(attr_vals):
+    """
+    Helper method for loading attributes values from file.
+    :param attr_vals: Raw data from file. List of string lines.
+    :return: dictionary {name_of_image:list_of_ints}
+    """
+    _map = {}
+    for attr_val in attr_vals:
+        key = attr_val.split()[0].split("/")[-1]
+        values = [i - 1 for i in list(map(int, attr_val.split()[1:]))]
+        # add -1 for age
+        values.append(-1)
+        _map[key] = values
+    return _map
+
 def load_config_merged(conf_file):
     train = []
     val = []
@@ -41,7 +56,7 @@ class DataGeneratorMerged(DataGeneratorOnLine):
         'Initialization'
         self.img_shape = img_shape
         self.chunk_size = chunk_size
-        self.attr_map_celeb = create_map(load_atributes_txts())
+        self.attr_map_celeb = create_map_m(load_atributes_txts())
         self.coord_dict = load_crop_boxes()
         # split data to training,testing,validation
         self.train_ids_w, self.validation_ids_w, self.test_ids_w, self.attr_map_w = load_config_merged(CONF_FILE_WIKI)
@@ -58,6 +73,7 @@ class DataGeneratorMerged(DataGeneratorOnLine):
         :return:
         """
         # Generate Wiki data
+        print("Generating W")
         indx = 0
         to = indx + self.chunk_size
         while indx <= len(pict_ids_w):
@@ -76,7 +92,7 @@ class DataGeneratorMerged(DataGeneratorOnLine):
                 to = len(pict_ids_w)
 
             yield images, img_labels
-
+        print("Generating A")
         # Generate Celeb Data
         indx = 0
         to = indx + self.chunk_size
@@ -105,8 +121,6 @@ class DataGeneratorMerged(DataGeneratorOnLine):
         to_return = []
         for key in keys:
             to_return.append(self.attr_map_celeb[key])
-            # add missing label for age
-            to_return[-1].append(-1)
         # need to transform to N arrays, as KERAS requires all labels for one output/attribute
         # in single array, so for 5 attributes and bulk 1024, it will be 5 arrays of length
         # 10240
@@ -147,9 +161,10 @@ class DataGeneratorMerged(DataGeneratorOnLine):
                 x = np.expand_dims(x, axis=0)
                 images.append(x)
             except Exception as e:
-                print(path, str(e))
+                # print(path, str(e))
                 errs.append(img_name)
 
+        print("Caught ", str(len(errs)), " errors, which is ", str(len(errs)/len(img_names)*100), "%")
         return np.vstack(images), errs
 
     def generate_training(self):

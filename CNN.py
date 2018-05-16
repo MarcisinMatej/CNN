@@ -4,7 +4,7 @@ from keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Activation
 from keras.layers import Dense
 from keras.layers import Input, Flatten
 from keras.models import Model, model_from_json
-from keras.utils import plot_model
+# from keras.utils import plot_model
 
 from data_proc.DataLoaderCelebA import get_attributes_desc, get_category_names
 # from main_plots import _plot_model
@@ -72,6 +72,7 @@ def define_network_2_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
 
     model = Model(inputs=inputs, outputs=output_layers)
 
+
     # summarize layers
     print(model.summary())
     #TODO plot model
@@ -125,7 +126,7 @@ def define_network_with_BN(in_shape=(32, 32, 3), single_output_ind = None):
     print(model.summary())
     #TODO plot model
     # _plot_model(model)
-    plot_model(model, to_file='model.png')
+    # plot_model(model, to_file='model.png')
     return model
 
 
@@ -183,7 +184,173 @@ def define_network(in_shape=(32, 32, 3), single_output_ind = None):
     print(model.summary())
     #TODO plot model
     # _plot_model(model)
-    plot_model(model, to_file='model.png')
+    # plot_model(model, to_file='model.png')
+    return model
+
+
+def define_network_multi(out_arity, out_names, in_shape=(32, 32, 3)):
+    """
+    Creates model for CNN with Keras functional api.
+    Model graph is fixed. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
+    :param in_shape: tuple (x,y,z) of input shape for model
+    :return: keras model
+    """
+
+    channel = "channels_last"
+    #define shape of input
+    inputs = Input(shape=in_shape,name="input")
+
+    # define layers relationships
+    conv1 = Conv2D(32, (3, 3), padding='valid',activation='relu')(inputs)
+    conv2 = Conv2D(32, (3, 3), padding='valid',activation='relu')(conv1)
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv2)
+    conv3 = Conv2D(64, (3, 3), padding='valid',activation='relu')(maxp1)
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv3)
+    conv4 = Conv2D(64, (3, 3), padding='valid',activation='relu')(maxp2)
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2,data_format=channel)(conv4)
+    conv5 = Conv2D(128, (3, 3), padding='valid',activation='relu')(maxp3)
+    conv6 = Conv2D(128, (4, 4), padding='valid',activation='relu')(conv5)
+    conv7 = Conv2D(2048, (5, 5), padding='valid',activation='relu')(conv6)
+    conv8 = Conv2D(2048, (1, 1), padding='valid',activation='relu')(conv7)
+    flatten = Flatten()(conv8)
+    output_layers = []
+
+    for cnt, _name in zip(out_arity, out_names):
+        output_layers.append(Dense(cnt, activation='softmax', name=_name)(flatten))
+    model = Model(inputs=inputs, outputs=output_layers)
+
+    # summarize layers
+    print(model.summary())
+    #TODO plot model
+    # _plot_model(model)
+    # plot_model(model, to_file='model.png')
+    return model
+
+
+def define_network_BN_multi(out_arity, out_names, in_shape=(32, 32, 3)):
+    """
+    Creates model for CNN with Keras functional api.
+    Model graph is fixed. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
+    :param in_shape: tuple (x,y,z) of input shape for model
+    :return: keras model
+    """
+
+    channel = "channels_last"
+    #define shape of input
+    inputs = Input(shape=in_shape,name="input")
+
+    # define layers relationships
+    conv1 = Conv2DBatchNormRelu(32, 3, 3, inputs=inputs, ind='1')
+    conv2 = Conv2DBatchNormRelu(32, 3, 3, inputs=conv1, ind='2')
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_1")(conv2)
+    conv3 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp1, ind='3')
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_2")(conv3)
+    conv4 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp2, ind='4')
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_3")(conv4)
+    conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3, ind='5')
+    conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5, ind='6')
+    conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6, ind='7')
+    # conv8 = Conv2DBatchNormRelu(2048, 1, 1, inputs=conv7,ind='8')
+    conv8 = Conv2D(2048, (1, 1), name='Conv_8')(conv7)
+    flatten = Flatten()(conv8)
+    output_layers = []
+
+    for cnt, _name in zip(out_arity, out_names):
+        output_layers.append(Dense(cnt, activation='softmax', name=_name)(flatten))
+    model = Model(inputs=inputs, outputs=output_layers)
+
+    # summarize layers
+    print(model.summary())
+    #TODO plot model
+    # _plot_model(model)
+    # plot_model(model, to_file='model.png')
+    return model
+
+
+def define_network_wiki(in_shape=(32, 32, 3), single_output_ind = None):
+    """
+    Creates model for CNN with Keras functional api.
+    Model graph is fixed. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
+    :param in_shape: tuple (x,y,z) of input shape for model
+    :return: keras model
+    """
+
+    channel = "channels_last"
+    #define shape of input
+    inputs = Input(shape=in_shape,name="input")
+
+    # define layers relationships
+    conv1 = Conv2DBatchNormRelu(32, 3, 3, inputs=inputs, ind='1')
+    conv2 = Conv2DBatchNormRelu(32, 3, 3, inputs=conv1, ind='2')
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_1")(conv2)
+    conv3 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp1, ind='3')
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_2")(conv3)
+    conv4 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp2, ind='4')
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_3")(conv4)
+    conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3, ind='5')
+    conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5, ind='6')
+    conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6, ind='7')
+    conv8 = Conv2D(2048, (1, 1), name='Conv_8')(conv7)
+    flatten = Flatten()(conv8)
+    output_layers = []
+
+    output_layers.append(Dense(2, activation='softmax', name="Gender")(flatten))
+    output_layers.append(Dense(5, activation='softmax', name="Age")(flatten))
+    model = Model(inputs=inputs, outputs=output_layers)
+    # summarize layers
+    print(model.summary())
+    # plot_model(model, to_file='model.png')
+    return model
+
+def define_network_merged(in_shape=(32, 32, 3), single_output_ind = None):
+    """
+    Creates model for CNN with Keras functional api.
+    Model graph is fixed. The output layers are defined by
+    'attributes_values.txt' file. The number of lines is number of outputs
+    and number of categories is determined by number of listed categories for each
+    attribute.
+    :param in_shape: tuple (x,y,z) of input shape for model
+    :return: keras model
+    """
+
+    channel = "channels_last"
+    #define shape of input
+    inputs = Input(shape=in_shape,name="input")
+
+    # define layers relationships
+    conv1 = Conv2DBatchNormRelu(32, 3, 3, inputs=inputs, ind='1')
+    conv2 = Conv2DBatchNormRelu(32, 3, 3, inputs=conv1, ind='2')
+    maxp1 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_1")(conv2)
+    conv3 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp1, ind='3')
+    maxp2 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_2")(conv3)
+    conv4 = Conv2DBatchNormRelu(64, 3, 3, inputs=maxp2, ind='4')
+    maxp3 = MaxPooling2D(pool_size=(2, 2), strides=2, data_format=channel, name="MP_3")(conv4)
+    conv5 = Conv2DBatchNormRelu(128, 3, 3, inputs=maxp3, ind='5')
+    conv6 = Conv2DBatchNormRelu(128, 4, 4, inputs=conv5, ind='6')
+    conv7 = Conv2DBatchNormRelu(2048, 5, 5, inputs=conv6, ind='7')
+    conv8 = Conv2D(2048, (1, 1), name='Conv_8')(conv7)
+    flatten = Flatten()(conv8)
+    output_layers = []
+
+    atrs_desc = get_attributes_desc()
+    cat_names = get_category_names()
+    for cnt, _name in zip(atrs_desc, cat_names):
+        output_layers.append(Dense(cnt, activation='softmax', name=_name)(flatten))
+
+    output_layers.append(Dense(5, activation='softmax', name="Age")(flatten))
+    model = Model(inputs=inputs, outputs=output_layers)
+    # summarize layers
+    print(model.summary())
+    # plot_model(model, to_file='model.png')
     return model
 
 def save_model(model,path,ep_ind,best_loss,best_ep_ind):

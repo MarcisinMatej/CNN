@@ -2,7 +2,8 @@ import tensorflow as tf
 from keras import optimizers
 
 from CNN import save_model, load_model, define_network_with_BN, define_network, define_network_wiki, \
-    define_network_merged
+    define_network_merged, define_network_multi, define_network_BN_multi
+from data_proc.DataGeneratorIMDB import DataGeneratorIMDB
 from data_proc.DataGeneratorMerged import DataGeneratorMerged
 from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
 from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
@@ -10,20 +11,21 @@ from data_proc.DataGeneratorWiki import DataGeneratorWiki
 from data_proc.MyVirtualGenerator import MyVirtualGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
 
-bulk_size = 1024
+bulk_size = 10000
 model_path = 'models/'
 n_epochs = 100
-batch_size = 124
+batch_size = 64
 in_shape = (100, 100, 3)
 resolution = (100, 100)
 VIRT_GEN_STOP = 1
 BEST_LOSS = 999999999
 BEST_EPOCH_IND = 0
 # without BN
-LEARNING_RATE = 0.0000007
+LEARNING_RATE = 0.00000067
 # with BN
 # learning_rate = 0.0000007
 MASK_VALUE = -1
+VERBOSE = 1
 
 def _to_tensor(x, dtype):
     """Convert the input `x` to a tensor of type `dtype`.
@@ -81,7 +83,7 @@ def train_epoch(model, generator, ep_ind, ep_hist_train):
     # training
     for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
         # TODO here we can select just 1 attribute for training
-        histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1))
+        histories_train.append(model.fit(X_train, Y_train, batch_size=batch_size, epochs=1, verbose=VERBOSE))
 
     save_model(model, model_path,ep_ind,BEST_LOSS,BEST_EPOCH_IND)
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
@@ -101,7 +103,7 @@ def validate_epoch(model, generator, epoch_id,ep_hist_val):
     val_gen = generator.generate_validation()
     agg = 0
     for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
-        hist_val.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size))
+        hist_val.append(model.evaluate(x=X_train, y=Y_train, batch_size=batch_size, verbose=VERBOSE))
         agg += hist_val[-1][0]
     plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
     # save model if we get better validation loss
@@ -131,7 +133,7 @@ def train_epoch_single(model, generator, ep_ind, ep_hist_train, out_index):
     # training
     for X_train, Y_train in train_gen:  # these are chunks of ~bulk pictures
         # TODO here we can select just 1 attribute for training
-        histories_train.append(model.fit(X_train, Y_train[out_index], batch_size=batch_size, epochs=1))
+        histories_train.append(model.fit(X_train, Y_train[out_index], batch_size=batch_size, epochs=1, verbose=VERBOSE))
 
     save_model(model, model_path,ep_ind,BEST_LOSS,BEST_EPOCH_IND)
     plot_history(merge_history(histories_train), ep_hist_train, str(ep_ind) + 'epoch_train')
@@ -151,7 +153,7 @@ def validate_epoch_single(model, generator, epoch_id, ep_hist_val, out_index):
     val_gen = generator.generate_validation()
     agg = 0
     for X_train, Y_train in val_gen:  # these are chunks of ~bulk pictures
-        hist_val.append(model.evaluate(x=X_train, y=Y_train[out_index], batch_size=batch_size))
+        hist_val.append(model.evaluate(x=X_train, y=Y_train[out_index], batch_size=batch_size, verbose=VERBOSE))
         agg += hist_val[-1][0]
     plot_history(prepare_eval_history(hist_val), ep_hist_val, str(epoch_id) + 'epoch_validation')
     # save model if we get better validation loss
@@ -168,13 +170,32 @@ def run_model():
     Prepares fresh new model and network and runs it.
     :return:
     """
-    model = define_network_with_BN(in_shape=in_shape)
+    model = define_network(in_shape=in_shape)
     opt = optimizers.Adam(lr=LEARNING_RATE)
     model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
 
     ep_hist_train = {}
     ep_hist_val = {}
     generator = DataGeneratorOnLine(resolution, bulk_size)
+    for e in range(n_epochs):
+        print("epoch %d" % e)
+        train_epoch(model, generator, e, ep_hist_train)
+        # Validing epoch
+        validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_model_imdb():
+    """
+    Prepares fresh new model and network and runs it.
+    :return:
+    """
+    model = define_network_BN_multi([2, 6], ["Gender", "Age"], in_shape=in_shape)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
+    model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy'])
+
+    ep_hist_train = {}
+    ep_hist_val = {}
+    generator = DataGeneratorIMDB(resolution, bulk_size)
     for e in range(n_epochs):
         print("epoch %d" % e)
         train_epoch(model, generator, e, ep_hist_train)
@@ -386,7 +407,7 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    # run_model()
+    run_model()
     # run_model_hidden()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
@@ -397,4 +418,5 @@ if __name__ == "__main__":
     # run_model_with_single_out(0)
     # run_load_model_single(0)
     # run_model_wiki()
-    run_model_merged()
+    # run_model_merged()
+    # run_model_imdb()
