@@ -81,8 +81,3 @@ In case you would like to skip some steps, see documentation of each script, whi
 README.md template thanks to [Akash Nimare](https://medium.com/@meakaakka/a-beginners-guide-to-writing-a-kickass-readme-7ac01da88ab3) 
 
 Rainer Lienhart, haarcascade_frontalface_default.xml
-
-## License
-A short snippet describing the license (MIT, Apache etc)
-
-MIT © [Yourname]()
