@@ -10,9 +10,6 @@ be able to predict all attributes on new examples even though the model was not 
 ## Code style
 
 [python-standard-style](https://www.python.org/dev/peps/pep-0008/)
- 
-## Screenshots
-Include logo/demo screenshot etc.
 
 ## Software dependencies:
 
@@ -43,9 +40,6 @@ Include logo/demo screenshot etc.
  - Multi-output model with hiding labels from CelebA dataset
  - Multi-output model for merged datasets CelebA and Wiki
  - Real-time demo on video stream with estimation of learned attributes
-
-## Code Example
-Show what the library does as concisely as possible, developers should be able to figure out **how** your project solves their problem by looking at the code example. Make sure the API you are showing off is obvious, and that your code is short and concise.
 
 ## Installation
 After installing all required libararies mentioned in previous sections and cloning the project you should valiadate folder structure against this description. 
