@@ -1,7 +1,12 @@
+"""
+Image pre-process methods for reducing original size of database.
+This script can crop faces from original dataset and save cropped database,
+thus saving significant amount of memory.
+"""
+
 from CNN import save_dictionary
-from data_proc import ImageParser
+from data_proc import ImageHandler
 from data_proc.DataGenerator import DataGenerator
-import numpy as np
 
 PATH = 'data_proc/config_files/'
 # PATH = 'config_files/'
@@ -45,7 +50,7 @@ def crop_store_images(bboxes, folders, size=(64, 64)):
         images.append(img)
     for img in images:
         # TODO change here we crop and resize
-        ImageParser.crop_resize(img['path'], img['bbox'], img['folder'] + img['name'], size=size)
+        ImageHandler.crop_resize(img['path'], img['bbox'], img['folder'] + img['name'], size=size)
 
 
 def run_data_crop(size):

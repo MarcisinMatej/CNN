@@ -4,11 +4,11 @@ from CNN import load_dictionary
 from keras.preprocessing import image
 
 from data_proc.DataGenerator import data_folder
-from data_proc.DataLoaderCelebA import  load_folder_txts, load_attr_vals_txts
+from data_proc.ConfigLoaderCelebA import  load_folder_txts, load_attr_vals_txts
 import numpy as np
 import random
 
-from data_proc.ImageParser import get_crop_resize_virtualize, get_crop_resize
+from data_proc.ImageHandler import get_crop_resize_virtualize, get_crop_resize
 from data_proc.ImagePreProcess import load_crop_boxes
 
 LABEL_DICT_PATH = "data_proc/encoded_labels.npy"
@@ -18,7 +18,7 @@ SEED = 713
 
 
 
-class MyVirtualGenerator(object):
+class DataGeneratorCelebAVirtual(object):
     """Generates data for Keras"""
     def __init__(self, img_shape=(100, 100), chunk_size=1024, rot_int=(-10, 10), sc_int=(-5, 5), virt_dupl=1):
         """

@@ -2,6 +2,17 @@
 Helper functions for ploting results.
 Disclaimer, those functions are highly specified for our use case,
 not recommended for general usage.
+This plots are implemented:
+    - Confussion matrices for:
+        -- CelebA
+        -- Imdb
+        -- Wiki
+        -- CelebA + Imdb
+        -- CelebA single output
+    - History of accuracy for:
+        -- single epoch
+        -- whole training
+For plotting confusion matrcies, please run main_evaluation.py first.
 """
 
 import matplotlib.pyplot as plt
@@ -12,7 +23,7 @@ import glob
 import re
 import math
 
-from data_proc.DataLoaderCelebA import get_cat_attributes_names, get_category_names
+from data_proc.ConfigLoaderCelebA import get_cat_attributes_names, get_category_names
 
 COLORS = {"Attract_acc":"g","Attract_loss":"g",
                 "Glass_acc":"r","Glass_loss":"r",
@@ -20,7 +31,8 @@ COLORS = {"Attract_acc":"g","Attract_loss":"g",
                 "Smile_acc":"m", "Smile_loss":"m",
                 "Hair_acc":"y","Hair_loss":"y",
                 "Agg_loss":"b",
-                "loss":"b","acc":"b"
+                "loss":"b","acc":"b",
+                "Age_loss":"p", "Age_acc":"p"
                 }
 
 COlOR_LIST = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
@@ -250,9 +262,10 @@ def recode_category_names(mydict):
     print(mydict.keys())
     for old_key in mydict.keys():
         if old_key not in tmp_solution.keys():
-            continue
-        new_key = tmp_solution[old_key]
-        new_dict[new_key] = mydict[old_key]
+            new_dict[old_key] = mydict[old_key]
+        else:
+            new_key = tmp_solution[old_key]
+            new_dict[new_key] = mydict[old_key]
     return new_dict
 
 
@@ -267,6 +280,7 @@ def plot_matrix(matrix, att_ind, alpha):
     ax.matshow(matrix, cmap=plt.cm.Blues)
     plt.xlabel("Predictions")
     plt.ylabel("True labels")
+    alpha = [al.strip() for al in alpha]
 
     for i in range(matrix.shape[0]):
         for j in range(matrix.shape[0]):
@@ -293,14 +307,19 @@ def convert_to_percentage_mat(matrix):
     """
     mat_sum = np.sum(matrix)
     round_matrix = np.zeros(np.shape(matrix),dtype=int)
+    hulo = 0
     for row_i in range(len(matrix)):
         for col_i in range(len(matrix[row_i])):
             matrix[row_i][col_i] = matrix[row_i][col_i]/mat_sum*100
             # take lower part
+            if row_i == col_i:
+                hulo += matrix[row_i][col_i]
             round_matrix[row_i][col_i] = math.floor(np.nan_to_num(matrix[row_i][col_i]))
-            # leave just float part
+            # leave just fractional part
+            # print(matrix[row_i][col_i])
             matrix[row_i][col_i] -= round_matrix[row_i][col_i]
 
+    print("Agg error:", 100-hulo)
     # Round values so we will get 100% in total
     while (100 - np.sum(round_matrix)) != 0:
         # get the index of biggest remainder in matrix
@@ -312,7 +331,7 @@ def convert_to_percentage_mat(matrix):
     return round_matrix
 
 
-def plot_diff_matrices(matrices, split_name):
+def plot_diff_matrices(matrices, split_name, ind = None):
     """
     Plots percentage diffusion matrices and saves them as .png files
     into figures/confusion folder
@@ -321,10 +340,16 @@ def plot_diff_matrices(matrices, split_name):
     for saved images
     :return:
     """
-    names = get_cat_attributes_names()
-    categories = get_category_names()
+    if ind is None:
+        names = get_cat_attributes_names()
+        categories = get_category_names()
+    else:
+        names = [get_cat_attributes_names()[ind]]
+        categories = [get_category_names()[ind]]
     for matrix,alpha,cat in zip(matrices, names, categories):
+        print("-----------------",split_name)
         plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
+
 
 def plot_diff_matrices_m(matrices, split_name):
     """
@@ -371,21 +396,42 @@ def plot_diff_matrices_wiki(matrices, split_name):
         plot_matrix(convert_to_percentage_mat(matrix), split_name+"_"+cat, alpha)
 
 
+def plot_celeba_matrices(res_dictionary):
+    """
+    Plot all 5 diffusion matrices for CelebA dataset.
+    :param res_dictionary: dictionary for all results.
+    :return:
+    """
+    plot_diff_matrices(res_dictionary['val'], "val")
+    plot_diff_matrices(res_dictionary['train'], "train")
+    plot_diff_matrices(res_dictionary['test'], "test")
+
+
+def plot_wiki_matrices(res_dictionary):
+    plot_diff_matrices_wiki(res_dictionary['val'], "val")
+    plot_diff_matrices_wiki(res_dictionary['train'], "train")
+    plot_diff_matrices_wiki(res_dictionary['test'], "test")
+
+
+def plot_imdb_matrices(res_dictionary):
+    plot_diff_matrices_imdb(res_dictionary['val'], "val")
+    plot_diff_matrices_imdb(res_dictionary['train'], "train")
+    plot_diff_matrices_imdb(res_dictionary['test'], "test")
+
+
+def plot_merged_matrices(res_dictionary):
+    plot_diff_matrices_m(res_dictionary['val'], "val")
+    plot_diff_matrices_m(res_dictionary['train'], "train")
+    plot_diff_matrices_m(res_dictionary['test'], "test")
+
+
+def plot_single_matrix(res_dictionary, i):
+    plot_diff_matrices(res_dictionary['val'], "val", i)
+    plot_diff_matrices(res_dictionary['train'], "train", i)
+    plot_diff_matrices(res_dictionary['test'], "test", i)
+
 if __name__ == "__main__":
-    # plot_agg_epoch()
+    plot_agg_epoch()
     # #plot_all_epoch_hist()
     d_d = load_dictionary("diff_dict.npy")
-    # plot_diff_matrices(d_d['val'], "val")
-    # plot_diff_matrices(d_d['train'], "train")
-    # plot_diff_matrices(d_d['test'], "test")
-    # plot_diff_matrices_wiki(d_d['val'], "val")
-    # plot_diff_matrices_wiki(d_d['train'], "train")
-    # plot_diff_matrices_wiki(d_d['test'], "test")
-
-    plot_diff_matrices_m(d_d['val'], "val")
-    plot_diff_matrices_m(d_d['train'], "train")
-    plot_diff_matrices_m(d_d['test'], "test")
-
-    plot_diff_matrices_imdb(d_d['val'], "val")
-    plot_diff_matrices_imdb(d_d['train'], "train")
-    plot_diff_matrices_imdb(d_d['test'], "test")
+    plot_celeba_matrices(d_d)

@@ -1,3 +1,7 @@
+"""
+Group of functions for loading configuration files for CelebA dataset.
+"""
+
 import numpy as np
 from PIL import Image
 from scipy import ndimage

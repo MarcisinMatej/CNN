@@ -1,5 +1,5 @@
 """
-Varios test like speed test, data statistics etc...
+Various test like speed test, data statistics etc...
 """
 
 import datetime
@@ -8,13 +8,14 @@ from collections import Counter
 from keras import optimizers
 
 from CNN import *
-from data_proc import DataGeneratorOnLine
+from data_proc import DataGeneratorCelebA
 from data_proc.DataGenerator import DataGenerator
+from data_proc.DataGeneratorIMDB import load_config_imdb
 from data_proc.DataGeneratorWiki import load_config_wiki, CONF_FILE
-from data_proc.DataLoaderCelebA import load_label_txts, load_folder_txts, get_cat_attributes_names
+from data_proc.ConfigLoaderCelebA import load_label_txts, load_folder_txts, get_cat_attributes_names
 import matplotlib.pyplot as plt
 
-from data_proc.ImageParser import crop_resize
+from data_proc.ImageHandler import crop_resize
 
 bulk_size = 1024
 model_path = 'model/'
@@ -22,7 +23,9 @@ n_epochs = 250
 batch_size = 32
 in_shape = (64, 64, 3)
 
-colors = ['#b5ffb9', "#f9bc86", "#a3acff", "red", "blue"]
+# colors = ['#b5ffb9', "#f9bc86", "#a3acff", "red", "blue", "red"]
+
+colors = ["#ef7161", "#2f4858", "#a06cd5", "#32965d", "red", "blue"]
 
 def bulk_time_test():
     sizes = [32,128,256,512,1024,2048,4096,8192]
@@ -110,6 +113,8 @@ def count_gender_attractivenes(data):
 
 def plot_wiki_splits(data, cnt):
     import matplotlib.pyplot as plt
+    plt.rcParams.update({'font.size': 22})
+
     r = [0, 1, 2]
 
     bottoms = [0, 0, 0]
@@ -122,10 +127,10 @@ def plot_wiki_splits(data, cnt):
         bottoms = [i + j for i, j in zip(bottoms,data[i])]
 
     # Custom x axis
-    names = ("train", "val", "test")
+    names = ("Train", "Validation", "Test")
     plt.xticks(r, names)
     plt.xlabel("group")
-
+    plt.yticks(np.arange(0, 111, 10))
     # Show graphic
     plt.show()
 
@@ -174,15 +179,15 @@ def imdb_cat_age_plot():
         for line in lines:
             arr = line.split("\t")
             # age_arr.append(int(arr[6]))
-            if int(arr[6]) < 22:
+            if int(arr[6]) < 25:
                 age_arr.append(1)
-            elif int(arr[6]) < 30:
+            elif int(arr[6]) < 31:
                 age_arr.append(2)
-            elif int(arr[6]) < 40:
+            elif int(arr[6]) < 36:
                 age_arr.append(3)
-            elif int(arr[6]) < 50:
+            elif int(arr[6]) < 42:
                 age_arr.append(4)
-            elif int(arr[6]) < 60:
+            elif int(arr[6]) < 50:
                 age_arr.append(5)
             else:
                 age_arr.append(6)
@@ -190,16 +195,25 @@ def imdb_cat_age_plot():
     n_bins = 6
     fig, axs = plt.subplots(1, 1, sharey=True, tight_layout=True)
     # We can set the number of bins with the `bins` kwarg
-    axs.hist(age_arr, bins=n_bins, color=colors[4])
+    axs.hist(age_arr, bins=n_bins, color="blue")
     plt.show()
 
-def reformat_data(tr_f, data_gen, data_age):
+def reformat_data_wiki(tr_f, data_gen, data_age):
     for dict_val in tr_f:
         if len(dict_val.keys()) == 2:
             data_gen[0].append(float(dict_val[0]))
             data_gen[1].append(float(dict_val[1]))
         else:
             for i in range(5):
+                data_age[i].append(float(dict_val[i]))
+
+def reformat_data_imdb(tr_f, data_gen, data_age):
+    for dict_val in tr_f:
+        if len(dict_val.keys()) == 2:
+            data_gen[0].append(float(dict_val[0]))
+            data_gen[1].append(float(dict_val[1]))
+        else:
+            for i in range(6):
                 data_age[i].append(float(dict_val[i]))
 
 
@@ -220,15 +234,44 @@ def RunDataStatsWiki():
     freq_dict = count_freq(np.asarray(train), 2)
     data_gen = [[],[]]
     data_age = [[],[],[],[],[]]
-    reformat_data(freq_dict,data_gen,data_age)
+    reformat_data_wiki(freq_dict, data_gen, data_age)
     print("VALIDATION")
     freq_dict = count_freq(np.asarray(valid), 2)
-    reformat_data(freq_dict, data_gen, data_age)
+    reformat_data_wiki(freq_dict, data_gen, data_age)
     print("TEST")
     freq_dict = count_freq(np.asarray(test), 2)
-    reformat_data(freq_dict, data_gen, data_age)
+    reformat_data_wiki(freq_dict, data_gen, data_age)
 
     plot_wiki_splits(data_age, 5)
+    plot_wiki_splits(data_gen, 2)
+
+
+def RunDataStatsImdb():
+    tr, val, tst, attr_map, coords = load_config_imdb("imdb.txt")
+
+    train = []
+    valid = []
+    test = []
+    for key in tr:
+        train.append(attr_map[key])
+    for key in val:
+        valid.append(attr_map[key])
+    for key in tst:
+        test.append(attr_map[key])
+
+    print("TRAIN")
+    freq_dict = count_freq(np.asarray(train), 2)
+    data_gen = [[],[]]
+    data_age = [[],[],[],[],[],[]]
+    reformat_data_imdb(freq_dict, data_gen, data_age)
+    print("VALIDATION")
+    freq_dict = count_freq(np.asarray(valid), 2)
+    reformat_data_imdb(freq_dict, data_gen, data_age)
+    print("TEST")
+    freq_dict = count_freq(np.asarray(test), 2)
+    reformat_data_imdb(freq_dict, data_gen, data_age)
+
+    plot_wiki_splits(data_age, 6)
     plot_wiki_splits(data_gen, 2)
 
 
@@ -294,19 +337,22 @@ def expand_coords(coords):
     """
     sc_coords = []
     # increase/decrease by scale, then increase borders to each direction by 25 %, convert to int
-    sc_coords.append(int((coords[0]) * 0.75))
-    sc_coords.append(int((coords[1]) * 0.75))
-    sc_coords.append(int((coords[2]) * 1.25))
-    sc_coords.append(int((coords[3]) * 1.25))
+    sc_coords.append(int((coords[0]) * 0.8))
+    sc_coords.append(int((coords[1]) * 0.8))
+    sc_coords.append(int((coords[2]) * 1.2))
+    sc_coords.append(int((coords[3]) * 1.2))
     return sc_coords
 
 def prepare_crop_imdb():
     folder_imdb = "/datagrid/personal/marcisin/"
     with open("data_proc/config_files/imdb.txt", encoding="utf8") as f:
         lines = f.readlines()
+        cnt = 0
         for line in lines:
+            cnt += 1
             arr = line.split("\t")
             path = folder_imdb + arr[0]
+            # coords = list(map(int, arr[2:6]))
             coords = expand_coords(list(map(int, arr[2:6])))
             saved_location = "data_proc/data/imdb/" + arr[0]
             try:
@@ -322,10 +368,11 @@ if __name__ == "__main__":
     # sess = tf.Session(config=config)
 
     #RunModelBatchTest()
-    # RunDataStatsCelebA()
+    RunDataStatsCelebA()
     # RunDataStatsWiki()
     # run_err_stats()
     # wiki_age_plot()
     # imdb_age_plot()
     # prepare_crop_imdb()
-    imdb_cat_age_plot()
+    # imdb_cat_age_plot()
+    # RunDataStatsImdb()

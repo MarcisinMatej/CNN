@@ -1,60 +1,97 @@
+"""
+Application of learned model on the prediction of the attributes from video.
+To run see requirements in github.
+"""
+
 
 import cv2
-import os
 import numpy as np
 
 # Open the input movie file
 from keras import optimizers
+from keras.models import model_from_json
 
-from CNN import load_model
-from main_training import model_path
+model_path = "model_for_demo/model"
 
-hairs = ["black hair", "blond hair", "brown hair", "gray hair", "other"]
+def load_model(path):
+    """
+    Load model for predictions from json
+    and its weights from .h5 file.
+    """
+    # load json and create model
+    json_file = open(path+".json", 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
+    # load weights into new model
+    loaded_model.load_weights(path+".h5")
+    print("Loaded model from disk")
+    return loaded_model
 
-def prediction_to_txt(predictions):
+
+def prediction_to_txt(preds):
+    """
+    Recodes prediction to string of attribute values.
+    :param preds: predictions
+    :return: annotated string based on the prediction vector
+    """
+
+    hairs = ["black", "blond", "brown", "gray", "other"]
     to_ret = []
-    # print(predictions)
-    for i in range(len(predictions[0])):
+    for i in range(len(preds[0])):
         to_ret.append("")
 
-        if np.argmax(predictions[0][i]) == 0:
-            to_ret[i] += "A-"
+        if np.argmax(preds[0][i]) == 0:
+            to_ret[i] += "Attr-"
         else:
-            to_ret[i] += "U-"
+            to_ret[i] += "Unat-"
 
-        if np.argmax(predictions[1][i]) == 0:
-            to_ret[i] += "G-"
+        if np.argmax(preds[1][i]) == 0:
+            # to_ret[i] += str(predictions[1][i][0])[1:7] + "-"
+            to_ret[i] += "Glass-"
         else:
-            to_ret[i] += "NG-"
+            # to_ret[i] += str(predictions[1][i][1])[1:7] + "-"
+            to_ret[i] += "No gl.-"
 
-        if np.argmax(predictions[2][i]) == 0:
-            to_ret[i] += "M-"
+        if np.argmax(preds[2][i]) == 0:
+            to_ret[i] += "Male-"
         else:
-            to_ret[i] += "F-"
+            to_ret[i] += "Female-"
 
-        if np.argmax(predictions[3][i]) == 0:
-            to_ret[i] += "S-"
+        if np.argmax(preds[3][i]) == 0:
+            to_ret[i] += "Smile-"
         else:
-            to_ret[i] += "NS-"
+            to_ret[i] += "No smile-"
 
-        last = np.argmax(predictions[4][i])
+        last = np.argmax(preds[4][i])
         to_ret[i] += hairs[last]
 
     return to_ret
 
 
 def draw_label(image, point, label, font=cv2.FONT_HERSHEY_SIMPLEX,
-               font_scale=1, thickness=2):
+               font_scale=0.75, thickness=1):
+    """
+    Support function for drawing text label into the frame.
+    :param image: frame to write to
+    :param point: (x,y) tuple position of starting point of text in the frame
+    :param label: text to write
+    :param font: text font
+    :param font_scale: text size
+    :param thickness: boldness of the text
+    :return:
+    """
     size = cv2.getTextSize(label, font, font_scale, thickness)[0]
     x, y = point
     cv2.rectangle(image, (x, y - size[1]), (x + size[0], y), (255, 0, 0), cv2.FILLED)
-    cv2.putText(image, label, point, font, font_scale, (255, 255, 255), thickness)
+    cv2.putText(image, label, (x, y ), font, font_scale, (255, 255, 255), thickness)
 
 
 def crop_face(imgarray, section, margin=25, size=100):
     """
-    :param imgarray: full image
-    :param section: face detected area (x, y, w, h)
+    Crops face from the frame based on boundig box
+    :param imgarray: full image frame
+    :param section: face detected area (x, y, w, h) - bounding box
     :param margin: add some margin to the face detected area to include a full head
     :param size: the result image resolution with be (size x size)
     :return: resized image in numpy array with shape (size x size x 3)
@@ -81,72 +118,94 @@ def crop_face(imgarray, section, margin=25, size=100):
         y_a = max(y_a - (y_b - img_h), 0)
         y_b = img_h
     cropped = imgarray[y_a: y_b, x_a: x_b]
-    resized_img = cv2.resize(cropped, (size, size), interpolation=cv2.INTER_AREA)
+    resized_img = cv2.resize(cropped, (size, size), interpolation=cv2.INTER_CUBIC)
+    # cv2.imshow("Debug", resized_img)
     resized_img = np.array(resized_img)
     return resized_img, (x_a, y_a, x_b - x_a, y_b - y_a)
 
 
-
-
 if __name__ == "__main__":
-    input_movie = cv2.VideoCapture("test5.mp4")
+    input_movie = cv2.VideoCapture("test.mp4")
     length = int(input_movie.get(cv2.CAP_PROP_FRAME_COUNT))
     cascade_file_src = "haarcascade_frontalface_default.xml"
     face_cascade = cv2.CascadeClassifier(cascade_file_src)
+    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
 
-    # Initialize some variables
+    # Initialize variables
     face_locations = []
     face_encodings = []
     face_names = []
     frame_number = 0
     face_size = 100
-    # labels = ["a", "b", "c", "d", "e"]
+    frame_cnt = 0
 
-    current_path = os.getcwd()
-
-    model, vars_dict = load_model(model_path)
+    model = load_model(model_path)
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy'])
 
-
+    initial_face = None
     # infinite loop, break by key ESC
     while True:
         # Capture frame-by-frame
         ret, frame = input_movie.read()
+        if frame is None:
+            break
+        faces = []
+        frame_cnt += 1
+        print(frame_cnt)
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(
+        # if frame_cnt < 160:
+        #     continue
+
+        if initial_face is not None:
+            face_img, cropped = crop_face(frame, initial_face, margin=55, size=face_size)
+            gray = cv2.cvtColor(face_img, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(
             gray,
             scaleFactor=1.1,
             minNeighbors=7,
-            minSize=(30, 30),
-            # minNeighbors=10,
-            # minSize=(face_size, face_size)
-        )
-        # if len(faces) > 1:
-        #     tmp = []
-        #     tmp.append(faces[0])
-        #     faces = tmp
+            minSize=(30, 30))
+
+            if len(faces) >= 1:
+                faces = []
+                faces.append(initial_face)
+        if len(faces) == 0:
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=7,
+            minSize=(30, 30))
+            if len(faces) >= 1:
+                initial_face = faces[0]
+
         # placeholder for cropped faces
         face_imgs = np.empty((len(faces), face_size, face_size, 3))
+        # face_imgs = []
         for i, face in enumerate(faces):
-            face_img, cropped = crop_face(frame, face, margin=35, size=face_size)
+            face_img, cropped = crop_face(frame, face, margin=25, size=face_size)
             (x, y, w, h) = cropped
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 200, 0), 2)
             face_imgs[i, :, :, :] = face_img
+            # face_imgs.append([face_img])
 
         if len(face_imgs) > 0:
-            # predict ages and genders of the detected faces
-            predictions = model.predict(face_imgs)
+            # predict attributes of the detected faces
+            predictions = model.predict(np.expand_dims(face_img,axis=0))
+            # cv2.imshow("aaa", face_img)
+            # cv2.imwrite("frames/tframe%d.jpg" % frame_cnt, face_img)
             labels = prediction_to_txt(predictions)
             # draw results
-            for i, face in enumerate(faces):
+            for i, face in enumerate(labels):
                 label = labels[i]
-                draw_label(frame, (face[0], face[1]), label)
-        cv2.imshow('Keras Faces', frame)
+                draw_label(frame, ((x, y+h)), label)
+        # cv2.imshow('Keras Faces', frame)
+        out.write(frame)
         if cv2.waitKey(5) == 27:  # ESC key press
             break
 
     # All done!
     input_movie.release()
-    cv2.destroyAllWindows()()
+    out.release()
+    cv2.destroyAllWindows()

@@ -1,3 +1,13 @@
+"""
+Image handler methods:
+    - loading image
+        -- load image as it is
+        -- load and resize image
+        -- load, crop, resize image
+    - save image
+    - load + crop + resize + save image
+"""
+
 from PIL import Image
 from PIL import ImageFile
 
@@ -90,7 +100,8 @@ def get_crop_resize(image_path, coords, size=(100, 100)):
     cords[1] = max(0, coords[1])
     cords[2] = min(image_obj.size[0], coords[2])
     cords[3] = min(image_obj.size[1], coords[3])
-    return image_obj.crop(cords).resize(size, resample=Image.BILINEAR)
+    # image_obj.crop(cords).resize(size, resample=Image.BILINEAR).save(str(coords[0])+"_ex.jpg")
+    return image_obj.crop(cords).resize(size, resample=Image.NEAREST)
 
 
 def get_image(image_path, size=(100, 100)):

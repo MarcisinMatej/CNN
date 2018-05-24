@@ -1,53 +1,14 @@
-from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
-from data_proc.DataLoaderCelebA import load_attr_vals_txts
-from data_proc.ImageParser import get_image
+from data_proc.ConfigLoaderWiki import load_config_wiki
+from data_proc.DataGeneratorCelebA import DataGeneratorCelebA
+from data_proc.ConfigLoaderCelebA import load_attr_vals_txts
+from data_proc.ImageHandler import get_image
 from keras.preprocessing import image
 import numpy as np
 
 IMAGES_FOLDER = "data_proc/data/wiki_crop/"
-CONF_FILE = "wiki_cat.txt"
-
-def load_config_wiki_age():
-    train = []
-    val = []
-    test = []
-    tmp = {}
-    with open("data_proc/config_files/"+CONF_FILE) as f:
-        lines = f.readlines()
-        for line in lines:
-            age = int(line.split(",")[2])
-            if age < 0 or age > 100:
-                continue
-            tmp[line.split(",")[0]] = [int(line.split(",")[1]), age]
-            if line.split(",")[-1] == "0\n":
-                train.append(line.split(",")[0])
-            if line.split(",")[-1] == "1\n":
-                val.append(line.split(",")[0])
-            if line.split(",")[-1] == "2\n":
-                test.append(line.split(",")[0])
-    return train, val, test, tmp
-
-def load_config_wiki(conf_file):
-    train = []
-    val = []
-    test = []
-    tmp = {}
-    with open("data_proc/config_files/"+conf_file) as f:
-        lines = f.readlines()
-        for line in lines:
-            age = int(line.split(",")[2])
-            tmp[line.split(",")[0]] = [int(line.split(",")[1]), age]
-            if line.split(",")[-1] == "0\n":
-                train.append(line.split(",")[0])
-            if line.split(",")[-1] == "1\n":
-                val.append(line.split(",")[0])
-            if line.split(",")[-1] == "2\n":
-                test.append(line.split(",")[0])
-    return train, val, test, tmp
 
 
-
-class DataGeneratorWiki(DataGeneratorOnLine):
+class DataGeneratorWiki(DataGeneratorCelebA):
     def __init__(self, img_shape=(100, 100), chunk_size=1024):
         """
 
@@ -62,7 +23,7 @@ class DataGeneratorWiki(DataGeneratorOnLine):
         # count how many different attributes we will predict
         self.attr_cnt = len(self.attr_vals)
         # split data to training,testing,validation
-        self.train_ids, self.validation_ids, self.test_ids, self.attr_map = load_config_wiki(CONF_FILE)
+        self.train_ids, self.validation_ids, self.test_ids, self.attr_map = load_config_wiki()
         print("-- Generator Wiki initialized.")
 
     def get_images_online(self, img_names):
@@ -122,7 +83,7 @@ class DataGeneratorWiki(DataGeneratorOnLine):
         the labels are returned in the same order as corresponding
         keys in parameter list.
         :param keys: list of labels in string format
-        :return: labels for specific batch of data in one-hot encoded format
+        :return: labels for specific batch of data in raw form.
         """
         to_return = []
         for key in keys:

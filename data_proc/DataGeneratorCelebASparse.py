@@ -1,6 +1,7 @@
-from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
-from data_proc.DataLoaderCelebA import load_attr_vals_txts, load_atributes_txts
+from data_proc.DataGeneratorCelebA import DataGeneratorCelebA
+from data_proc.ConfigLoaderCelebA import load_attr_vals_txts, load_atributes_txts
 import numpy as np
+import random
 
 from data_proc.ImagePreProcess import load_crop_boxes
 
@@ -29,10 +30,10 @@ def create_map(attr_vals):
     return _map
 
 
-class DataGeneratorOnLineSparse(DataGeneratorOnLine):
+class DataGeneratorCelebASparse(DataGeneratorCelebA):
     """Generates data for Keras"""
 
-    def __init__(self, img_shape=(100, 100), chunk_size=1024):
+    def __init__(self, img_shape=(100, 100), chunk_size=1024, in_place=False):
         """
         :param img_shape: resolution of final image
         :param chunk_size: size of super batch
@@ -48,6 +49,16 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
         self.test_ids = []
         self.validation_ids = []
         self.find_split_ids()
+        self.in_place = in_place
+
+        if in_place:
+            self.training_data, err_t = self.get_images_online(self.train_ids)
+            self.validation_data, err_v = self.get_images_online(self.validation_ids)
+            self.train_ids = self.get_encoded_labels([name for name in self.train_ids if name not in err_t])
+            self.validation_ids = self.get_encoded_labels([name for name in self.validation_ids if name not in err_v])
+
+        # shuffle ids so when we pick mask it is random
+        self.train_ids = random.shuffle(self.train_ids)
 
     def get_encoded_labels(self, keys):
         """
@@ -98,9 +109,8 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
                 """
         indx = 0
         to = indx + self.chunk_size
-        threshold = 1 / len(MASKS)
         while indx <= len(pict_ids):
-            # get mask proportional to numer of masks
+            # get mask proportional to number of masks
             stat = indx / len(pict_ids)
             if stat < 0.2:
                 mask_ind = 0
@@ -115,11 +125,12 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
             mask = MASKS[mask_ind]
             images, errs = self.get_images_online(pict_ids[indx: to])
             if len(errs) > 0:
-                # get only labels for images which were correctly loade
+                # get only labels for images which were correctly loaded
                 img_labels = self.get_encoded_labels_h(
                     [name for name in pict_ids[indx: to] if name not in errs],
                     mask)
             else:
+                # remove not loaded labels
                 img_labels = self.get_encoded_labels_h(pict_ids[indx: to],
                                                        mask)
             # get next boundaries
@@ -130,3 +141,15 @@ class DataGeneratorOnLineSparse(DataGeneratorOnLine):
                 to = len(pict_ids)
 
             yield images, img_labels
+
+    def generate_training(self):
+        if self.in_place:
+            yield self.training_data, self.train_ids
+        else:
+            return self.generate_data(self.train_ids)
+
+    def generate_validation(self):
+        if self.in_place:
+            yield self.validation_data, self.validation_ids
+        else:
+            return self.generate_data(self.validation_ids)

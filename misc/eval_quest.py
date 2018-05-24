@@ -1,3 +1,6 @@
+"""
+Support script just for computing aggregate error from the questionaire.
+"""
 
 
 encode = {"Attractive":"1", "Unattractive":"2",
@@ -20,7 +23,8 @@ if __name__ == "__main__":
     f.close()
 
     resp_cnt = 0
-    with open("output.csv") as f:
+    cnt = [0 for i in range(5)]
+    with open("quest_output.csv") as f:
         for line in f.readlines():
             if "submit," in line:
                 resp_cnt += 1
@@ -28,10 +32,11 @@ if __name__ == "__main__":
                 key = line.split('_')[0]
                 cat_ind = encode_cat[line.split(",")[0][-1]]
                 val = encode[line.split(',')[1].strip()]
-
+                cnt[cat_ind] += 1
                 if labels[key][cat_ind] != val:
                     error_cnt[cat_ind] += 1
 
     print(resp_cnt)
-    for err in error_cnt:
-        print(err/resp_cnt)
+    for err, c in zip(error_cnt, cnt):
+        print("Error:",err/resp_cnt)
+        print("Annotations: ", c)

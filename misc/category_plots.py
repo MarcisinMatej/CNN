@@ -118,7 +118,7 @@ def plot_all_errors():
     # set height of bar
     errs_single = [22, 1, 3, 8, 33]
     errs_multi = [22, 1, 4, 9, 35]
-    errs_hum = [30, 1, 2, 15, 51]
+    errs_hum = [30, 1, 2, 12, 48]
     errs_rand = [48, 7, 43, 48, 62]
 
     # Set position of bar on X axis
@@ -128,17 +128,17 @@ def plot_all_errors():
     r4 = [x + barWidth for x in r3]
 
     # Make the plot
-    plt.bar(r1, errs_single, color='#ef7161', width=barWidth, edgecolor='white', label='single')
-    plt.bar(r2, errs_multi, color='#2f4858', width=barWidth, edgecolor='white', label='multi')
-    plt.bar(r3, errs_hum, color='#a06cd5', width=barWidth, edgecolor='white', label='human')
-    plt.bar(r4, errs_rand, color='#32965d', width=barWidth, edgecolor='white', label='random')
+    plt.bar(r1, errs_single, color='#ef7161', width=barWidth, edgecolor='white', label='STM')
+    plt.bar(r2, errs_multi, color='#2f4858', width=barWidth, edgecolor='white', label='MTM')
+    plt.bar(r3, errs_hum, color='#a06cd5', width=barWidth, edgecolor='white', label='CV human')
+    plt.bar(r4, errs_rand, color='#32965d', width=barWidth, edgecolor='white', label='Random')
 
     # Add xticks on the middle of the group bars
-    plt.xlabel('group', fontweight='bold')
+    # plt.xlabel('Attribute', fontweight='bold')
     plt.xticks([r + barWidth for r in range(len(errs_single))], ['Attractive', 'Glass', 'Gender', 'Smile', 'Hair'])
 
     # Create legend & Show graphic
-    plt.legend()
+    plt.legend(bbox_to_anchor=(0.6875, 1))
     plt.show()
 
 

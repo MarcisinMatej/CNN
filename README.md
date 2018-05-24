@@ -1,5 +1,5 @@
 ## Project title
-A convolutional neural network for estimating multiple face attributes from images of faces which is learning from incomplete data.
+A convolutional neural network for estimating multiple face attributes from images.
 
 ## Motivation
 This project was developed as assignment for master thesis. The main goal is to develop and evaluate capabilities of deep learning, 
@@ -39,6 +39,7 @@ Include logo/demo screenshot etc.
  - Multi-output model for:
  	- CelebA dataset
  	- Wiki dataset
+ 	- Imdb dataset
  - Multi-output model with hiding labels from CelebA dataset
  - Multi-output model for merged datasets CelebA and Wiki
  - Real-time demo on video stream with estimation of learned attributes
@@ -67,21 +68,18 @@ This script will validate required libraries and configuration. If everything wi
     └── models					# Saved model from the last epoch and the best achieved validation error model
 
 
-## Tests
-Describe and show how to run the tests with code examples.
 
 ## How to use?
-If people like your project they’ll want to learn how they can use it. To do so include step by step guide to use your project.
+The scripts should be run in following order.
 
 	$ python requirements.py 					# chcek if required libraries are installed and properly configured
 	$ python main_training.py 					# train model
 	$ python main_evaluation.py 				# evaluate trained model
 	$ python main_plots.py 						# produce training history plots and confusion matrices
-	$ python stream_cap.py 						# run live demo
+	$ python stream_cap.py 						# run live demo on trained model
 
-## Contribute
+In case you would like to skip some steps, see documentation of each script, which lists its prerequisites.
 
-Let people know how they can contribute into your project. A [contributing guideline](https://github.com/zulip/zulip-electron/blob/master/CONTRIBUTING.md) will be a big plus.
 
 ## Credits
 
@@ -89,8 +87,6 @@ Let people know how they can contribute into your project. A [contributing guide
 README.md template thanks to [Akash Nimare](https://medium.com/@meakaakka/a-beginners-guide-to-writing-a-kickass-readme-7ac01da88ab3) 
 
 Rainer Lienhart, haarcascade_frontalface_default.xml
-
-#### Anything else that seems useful
 
 ## License
 A short snippet describing the license (MIT, Apache etc)

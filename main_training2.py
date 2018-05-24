@@ -14,20 +14,24 @@ Available trainig scenarios:
     - Load model with transfer knowledge
 """
 
+import keras
 import tensorflow as tf
-from keras import backend as K
 from keras import optimizers
+from keras.engine import Model
+from keras.layers import Flatten, Dense
 
 from CNN import save_model, load_model, define_network_with_BN, define_network, \
-    define_network_multi
-from data_proc.DataGeneratorCelebA import DataGeneratorCelebA
-from data_proc.DataGeneratorCelebASparse import DataGeneratorCelebASparse
-from data_proc.DataGeneratorCelebAVirtual import DataGeneratorCelebAVirtual
+    define_network_multi, define_network_BN_multi, load_model_specific
+from data_proc.DataGeneratorOUI import DataGeneratorOUI
 from data_proc.DataGeneratorIMDB import DataGeneratorIMDB
 from data_proc.DataGeneratorMerged import DataGeneratorMerged
-from data_proc.DataGeneratorOUI import DataGeneratorOUI
+from data_proc.DataGeneratorCelebA import DataGeneratorCelebA
+from data_proc.DataGeneratorCelebASparse import DataGeneratorCelebASparse
 from data_proc.DataGeneratorWiki import DataGeneratorWiki
+from data_proc.DataGeneratorCelebAVirtual import DataGeneratorCelebAVirtual
+from data_proc.VideoGenerator import VideoGenerator
 from main_plots import plot_history, merge_history, prepare_eval_history
+from keras import backend as K
 
 """
 Main hyper parameters setup
@@ -388,27 +392,6 @@ def run_load_model_single(ind):
         validate_epoch_single(model, generator, e, ep_hist_val, ind)
 
 
-def run_model_CelebA():
-    """
-    Loads model from saved location and runs it.
-    :return:
-    """
-    model = define_network_with_BN(in_shape=in_shape)
-    opt = optimizers.Adam(lr=LEARNING_RATE)
-    model.compile(optimizer=opt,loss= "categorical_crossentropy",loss_weights=[1, 1, 1, 1, 1], metrics=['accuracy'])
-
-    generator = DataGeneratorCelebA(resolution, bulk_size)
-    ep_hist_train = {}
-    ep_hist_val = {}
-
-    for e in range(n_epochs):
-        print("epoch %d" % e)
-        # Training
-        train_epoch(model, generator, e, ep_hist_train)
-        # Validating
-        validate_epoch(model, generator, e, ep_hist_val)
-
-
 def run_load_model_virtual():
     """
     Loads model from saved location and runs it.
@@ -433,6 +416,72 @@ def run_load_model_virtual():
         train_epoch(model, generator, e, ep_hist_train)
         # Validating
         validate_epoch(model, generator, e, ep_hist_val)
+
+
+def run_load_model_video_vgg():
+    """
+    Loads model from saved location and runs it.
+    :return:
+    """
+    global BEST_LOSS, BEST_EPOCH_IND
+    ep_hist_train = {}
+    ep_hist_val = {}
+    model,vars_dict = load_model_specific(model_path+"best_model_video")
+    print(vars_dict)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
+
+    model = keras.applications.vgg19.VGG19(include_top=False, weights='imagenet', input_shape=in_shape)
+
+
+    output_layers = []
+    x = model.output
+    x = Flatten()(x)
+    x = Dense(1024, activation="relu")(x)
+    x = Dense(1024, activation="relu")(x)
+    for cnt, _name in zip([2,2,2,2,5], ["atract","glas","gender","smile","hair"]):
+        output_layers.append(Dense(cnt, activation='softmax', name=_name)(x))
+
+    # creating the final model
+    model_final = Model(input=model.input, output=output_layers)
+
+    for layer in model_final.layers[:-10]:
+        print(layer.name)
+        layer.trainable = False
+
+    model_final.compile(optimizer=opt,loss= "categorical_crossentropy", metrics=['accuracy'])
+    generator = VideoGenerator(resolution, bulk_size)
+
+    for e in range(10):
+        print("epoch %d" % e)
+        # Training
+        train_epoch(model_final, generator, e, ep_hist_train)
+
+
+def run_load_model_video():
+    """
+    Loads model from saved location and runs it.
+    :return:
+    """
+    global BEST_LOSS, BEST_EPOCH_IND
+    generator = VideoGenerator(resolution, bulk_size)
+    ep_hist_train = {}
+    ep_hist_val = {}
+    model,vars_dict = load_model_specific(model_path+"best_model_video")
+    print(vars_dict)
+    opt = optimizers.Adam(lr=LEARNING_RATE)
+
+    for layer in model.layers[:-9]:
+        print(layer.name)
+        layer.trainable = False
+
+    model.compile(optimizer=opt,loss= "sparse_categorical_crossentropy", loss_weights=[0.01, 1, 1, 0.41, 0.61],metrics=['accuracy'])
+
+
+    for e in range(100):
+        print("epoch %d" % e)
+        # Training
+        train_epoch(model, generator, e, ep_hist_train)
+
 
 
 def run_network(model, optim, generator, start_ep):
@@ -474,7 +523,7 @@ if __name__ == "__main__":
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
 
-    run_model_CelebA()
+    run_model()
     # run_model_hidden()
     # run_model_virtual()
     # RunLoadedModelWithGenerators()
@@ -488,3 +537,4 @@ if __name__ == "__main__":
     # run_model_merged()
     # run_model_imdb()
     # run_model_adience()
+    # run_load_model_video()

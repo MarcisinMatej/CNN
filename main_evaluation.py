@@ -1,15 +1,17 @@
+"""
+Script for final evaluation of the learned model.
+For evaluation is used best model, chosen by the lowest validation
+error during training. This script is required to be run before plotting.
+"""
+
 import numpy as np
 import tensorflow as tf
 from keras import optimizers
 
 from CNN import load_model, save_dictionary
-from data_proc.DataGeneratorIMDB import DataGeneratorIMDB
-from data_proc.DataGeneratorMerged import DataGeneratorMerged
-from data_proc.DataGeneratorOnLine import DataGeneratorOnLine
-from data_proc.DataGeneratorOnLineSparse import DataGeneratorOnLineSparse
-from data_proc.DataGeneratorWiki import DataGeneratorWiki
-from data_proc.DataLoaderCelebA import get_cat_attributes_names
-from main_plots import plot_history, prepare_eval_history, plot_matrix
+from data_proc.DataGeneratorCelebA import DataGeneratorCelebA
+from data_proc.ConfigLoaderCelebA import get_cat_attributes_names
+from main_plots import plot_matrix
 from main_training import batch_size, model_path, bulk_size, resolution, MASK_VALUE
 
 TR_NAME = "test"
@@ -161,6 +163,42 @@ def eval_model_metrices(_model, _generator):
         print(name, ": ", str(res / cnt))
 
 
+def eval_model_metrices_single(_model, _generator, ind):
+    print("TRAIN")
+    res_train = None
+    res_tst = None
+    res_val = None
+    tst_gen = _generator.generate_training()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        tmp = model.evaluate(x=X_train, y=Y_train[ind], batch_size=batch_size, verbose=1)
+        if res_train == None:
+            res_train = tmp
+        else:
+            res_train = [i+j for i,j in zip(res_train,tmp)]
+    for res, name in zip(res_train,model.metrics_names ):
+        print(name, ": ", str(res))
+    print("TEST")
+    tst_gen = _generator.generate_testing()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        tmp = model.evaluate(x=X_train, y=Y_train[ind], batch_size=batch_size, verbose=1)
+        if res_tst == None:
+            res_tst = tmp
+        else:
+            res_tst = [i + j for i, j in zip(res_tst, tmp)]
+    for res, name in zip(res_tst, model.metrics_names):
+        print(name, ": ", str(res))
+    print("VAL")
+    tst_gen = _generator.generate_validation()
+    for X_train, Y_train in tst_gen:  # these are chunks of ~bulk pictures
+        tmp = model.evaluate(x=X_train, y=Y_train[ind], batch_size=batch_size, verbose=1)
+        if res_val == None:
+            res_val = tmp
+        else:
+            res_val = [i + j for i, j in zip(res_val, tmp)]
+    for res, name in zip(res_val, model.metrics_names):
+        print(name, ": ", str(res))
+
+
 def evaluate_all(_model, _generator):
     matrices_dict = {'val': run_difusion_matrix(_model, _generator, VAL_NAME),
                      'train': run_difusion_matrix(_model, _generator, TR_NAME),
@@ -186,13 +224,15 @@ if __name__ == "__main__":
     opt = optimizers.Adam(lr=0.0000015)
     model.compile(optimizer=opt, loss="sparse_categorical_crossentropy", metrics=['accuracy'])
     # generator = DataGeneratorWiki(resolution, bulk_size)
-    generator = DataGeneratorIMDB(resolution, bulk_size)
+    # generator = DataGeneratorIMDB(resolution, bulk_size)
+    generator = DataGeneratorCelebA(resolution, bulk_size)
 
     BEST_LOSS = vars_dict["loss"]
     BEST_EPOCH_IND = vars_dict["ep_ind"]
     print("Evaluating model from epoch[", str(BEST_EPOCH_IND), "]", " with best loss: ", str(BEST_LOSS))
 
 
-    evaluate_all(model, generator)
-    # evaluate_single(model,generator,0)
-    eval_model_metrices(model, generator)
+    # evaluate_all(model, generator)
+    evaluate_single(model, generator, 3)
+    # eval_model_metrices(model, generator)
+    eval_model_metrices_single(model, generator, 3)
