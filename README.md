@@ -2,7 +2,7 @@
 A convolutional neural network for estimating multiple face attributes from images.
 
 ## Motivation
-This project was developed as assignment for master thesis. The main goal is to develop and evaluate capabilities of deep learning, 
+The main goal is to develop and evaluate capabilities of deep learning, 
 specifically convolution neural network, for estimating multiple attributes from faces while learning on incomplete data. The main motivation
 behind this project is to evaluate possibility of learning such a model from different data sources which have different anotation labels and consequently
 be able to predict all attributes on new examples even though the model was not provide with any fully anotated examples. Final goal is to use this learned model for real time features estimation from video stream.
